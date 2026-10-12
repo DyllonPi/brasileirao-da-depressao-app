@@ -9,3 +9,6 @@ build/
 .idea/
 .DS_Store
 Thumbs.db
+
+# Repositório Git independente, fora do aplicativo principal
+/Brasileirão da Depressão/
