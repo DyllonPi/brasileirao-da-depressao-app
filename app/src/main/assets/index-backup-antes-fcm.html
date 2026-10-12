@@ -1,0 +1,7103 @@
+<!doctype html>
+<html lang="pt-BR">
+
+<head>
+
+<meta charset="utf-8">
+
+<meta
+    name="viewport"
+    content="width=device-width,initial-scale=1">
+
+<title>Brasileirão da Depressão</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+
+*{
+    box-sizing:border-box
+}
+
+body{
+    margin:0;
+    background:#fbfaf5;
+    color:#171717;
+    font-family:Arial,sans-serif
+}
+
+#loginScreen{
+    position:fixed;
+    inset:0;
+    z-index:9999;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:24px;
+    background:linear-gradient(145deg,#071b33,#0d3157);
+    overflow-y:auto;
+}
+
+.login-card{
+    width:100%;
+    max-width:390px;
+    padding:32px 28px;
+    background:#fff;
+    border-radius:24px;
+    text-align:center;
+    box-shadow:0 20px 60px rgba(0,0,0,.30);
+}
+
+.login-logo{
+    width:120px;
+    height:120px;
+    object-fit:contain;
+    display:block;
+    margin:0 auto 18px;
+}
+
+.login-title{
+    margin:0;
+    color:#0b2340;
+    font:700 27px Georgia,serif;
+}
+
+.login-subtitle{
+    margin:10px 0 26px;
+    color:#687789;
+    font-size:15px;
+    line-height:1.5;
+}
+
+.google-login-button{
+    width:100%;
+    min-height:52px;
+    border:1px solid #dadce0;
+    border-radius:12px;
+    background:#fff;
+    color:#202124;
+    font-size:16px;
+    font-weight:600;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:12px;
+    transition:.2s;
+}
+
+.google-login-button:active{
+    transform:scale(.98);
+}
+
+.google-login-button:disabled{
+    opacity:.7;
+}
+
+.google-icon{
+    width:20px;
+    height:20px;
+}
+
+.login-divider{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    margin:20px 0;
+    color:#9aa3ad;
+    font-size:12px;
+}
+
+.login-divider::before,
+.login-divider::after{
+    content:"";
+    flex:1;
+    height:1px;
+    background:#e1e4e7;
+}
+
+.create-account-button{
+    width:100%;
+    min-height:50px;
+    border:0;
+    border-radius:11px;
+    background:#254aa5;
+    color:#fff;
+    font-size:15px;
+    font-weight:700;
+    cursor:pointer;
+    transition:.2s;
+}
+
+.create-account-button:active{
+    transform:scale(.98);
+}
+
+.login-button{
+    width:100%;
+    min-height:50px;
+    margin-top:4px;
+    border:0;
+    border-radius:11px;
+    background:#254aa5;
+    color:#fff;
+    font-size:15px;
+    font-weight:700;
+    cursor:pointer;
+    transition:.2s;
+}
+
+.login-button:active{
+    transform:scale(.98);
+}
+
+.login-button:disabled,
+.create-account-button:disabled{
+    opacity:.65;
+    cursor:not-allowed;
+}
+
+.back-login-button{
+    width:100%;
+    margin-top:15px;
+    padding:10px;
+    border:0;
+    background:transparent;
+    color:#254aa5;
+    font-size:13px;
+    cursor:pointer;
+}
+
+.login-input{
+    width:100%;
+    height:48px;
+    margin-bottom:11px;
+    padding:0 14px;
+    border:1px solid #d5d9dd;
+    border-radius:10px;
+    background:#fff;
+    color:#202124;
+    font-size:14px;
+    outline:none;
+}
+
+.login-input:focus{
+    border-color:#254aa5;
+    box-shadow:0 0 0 2px rgba(37,74,165,.10);
+}
+
+.login-input::placeholder{
+    color:#8a949f;
+}
+
+.password-field{
+    position:relative;
+    width:100%;
+    margin-bottom:11px;
+}
+
+.password-field .login-input{
+    margin-bottom:0;
+    padding-right:48px;
+}
+
+.password-toggle{
+    position:absolute;
+    right:8px;
+    top:24px;
+    transform:translateY(-50%);
+    width:36px;
+    height:36px;
+    padding:7px;
+    border:0;
+    border-radius:6px;
+    background:transparent;
+    color:#526174;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    z-index:2;
+}
+
+.password-toggle svg{
+    width:22px;
+    height:22px;
+    display:block;
+}
+
+.password-toggle:focus-visible{
+    outline:2px solid #254aa5;
+    outline-offset:2px;
+}
+
+select.login-input{
+    appearance:auto;
+}
+
+.register-error{
+    min-height:17px;
+    margin:2px 0 10px;
+    color:#c62828;
+    font-size:12px;
+    line-height:1.4;
+}
+
+.register-success{
+    min-height:17px;
+    margin:2px 0 10px;
+    color:#28755e;
+    font-size:12px;
+    line-height:1.4;
+}
+
+.login-footer{
+    margin-top:22px;
+    color:#8a96a3;
+    font-size:12px;
+}
+
+
+/* ============================================================
+TELA OBRIGATÓRIA DO TIME DO CORAÇÃO
+============================================================ */
+
+#clubRequiredScreen{
+    position:fixed;
+    inset:0;
+    z-index:10000;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    padding:24px;
+    background:linear-gradient(145deg,#071b33,#0d3157);
+    overflow-y:auto;
+}
+
+.club-required-card{
+    width:100%;
+    max-width:390px;
+    padding:32px 28px;
+    background:#fff;
+    border-radius:24px;
+    text-align:center;
+    box-shadow:0 20px 60px rgba(0,0,0,.30);
+}
+
+.club-required-icon{
+    width:72px;
+    height:72px;
+    margin:0 auto 18px;
+    border-radius:50%;
+    display:grid;
+    place-items:center;
+    background:#254aa5;
+    color:#e2c300;
+    font:700 32px Georgia,serif;
+}
+
+.club-required-title{
+    margin:0;
+    color:#0b2340;
+    font:700 25px Georgia,serif;
+}
+
+.club-required-text{
+    margin:11px 0 23px;
+    color:#687789;
+    font-size:14px;
+    line-height:1.5;
+}
+
+.club-required-email{
+    margin:-12px 0 18px;
+    color:#8a949f;
+    font-size:11px;
+    word-break:break-word;
+}
+
+.club-required-button{
+    width:100%;
+    min-height:50px;
+    border:0;
+    border-radius:11px;
+    background:#254aa5;
+    color:#fff;
+    font-size:15px;
+    font-weight:700;
+    cursor:pointer;
+    transition:.2s;
+}
+
+.club-required-button:active{
+    transform:scale(.98);
+}
+
+.club-required-button:disabled{
+    opacity:.55;
+    cursor:not-allowed;
+}
+
+.club-required-error{
+    min-height:17px;
+    margin:10px 0 0;
+    color:#c62828;
+    font-size:12px;
+    line-height:1.4;
+}
+
+.club-required-note{
+    margin-top:18px;
+    color:#8a96a3;
+    font-size:11px;
+    line-height:1.4;
+}
+
+.club-required-logout{
+    width:100%;
+    margin-top:8px;
+    padding:10px;
+    border:0;
+    background:transparent;
+    color:#254aa5;
+    font-size:12px;
+    cursor:pointer;
+}
+
+
+.top{
+    height:64px;
+    padding:0 20px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border-bottom:1px solid #d9ddd2;
+    font-weight:700;
+}
+
+.mark{
+    display:grid;
+    place-items:center;
+    width:30px;
+    height:30px;
+    background:#254aa5;
+    color:#e2c300;
+    border-radius:50%;
+    font:italic 20px Georgia;
+    margin-right:9px;
+}
+
+.hero{
+    background:#254aa5;
+    color:white;
+    padding:35px 23px;
+    margin:20px 16px 38px;
+    position:relative;
+    overflow:hidden;
+    border:3px solid #e2c300;
+    box-shadow:5px 5px 0 #171717;
+}
+
+.hero:after{
+    content:attr(data-round);
+    position:absolute;
+    right:-15px;
+    bottom:-53px;
+    color:rgba(255,255,255,0.15);
+    font:bold 150px Georgia;
+    pointer-events:none;
+    z-index:0;
+}
+
+.hero *{
+    position:relative;
+    z-index:2;
+}
+
+.eyebrow{
+    margin:0 0 8px;
+    color:#e2c300;
+    font:10px monospace;
+    letter-spacing:1px;
+}
+
+.hero h1{
+    margin:0;
+    font:700 35px Georgia;
+    line-height:.98;
+}
+
+.hero h1 i{
+    color:#e2c300;
+}
+
+.intro{
+    color:#d5e4dc;
+    font-size:14px;
+    line-height:1.5;
+    max-width:290px;
+}
+
+.timer{
+    border:1px solid #a2c52f;
+    padding:12px;
+    margin-top:24px;
+    font:11px monospace;
+    color:#d5e4dc;
+}
+
+.timer b{
+    display:block;
+    color:#e2c300;
+    font-size:22px;
+    margin:7px 0;
+}
+
+.main{
+    padding:0 16px 44px;
+}
+
+.head{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-end;
+    margin-bottom:17px;
+}
+
+.head h2{
+    margin:0;
+    font:700 26px Georgia;
+}
+
+.hint{
+    font-size:10px;
+    color:#667169;
+    text-align:right;
+    max-width:150px;
+}
+
+.game{
+    background:white;
+    border:1px solid #d9ddd2;
+    padding:15px;
+    margin-bottom:11px;
+}
+
+.meta{
+    display:flex;
+    justify-content:space-between;
+    color:#667169;
+    font:10px monospace;
+}
+
+.teams{
+    display:grid;
+    grid-template-columns:1fr auto 1fr;
+    gap:8px;
+    align-items:center;
+    margin:14px 0;
+}
+
+.teams b:first-child{
+    text-align:right;
+}
+
+.teams span{
+    font:10px monospace;
+    color:#8a958c;
+}
+
+.score{
+    display:flex;
+    justify-content:center;
+    gap:7px;
+    align-items:center;
+}
+
+.score input{
+    width:45px;
+    height:39px;
+    text-align:center;
+    border:1px solid #c5cdc4;
+    font:bold 17px monospace;
+    color:#254aa5;
+}
+
+.score input:focus{
+    outline:none;
+    border-color:#254aa5;
+    box-shadow:0 0 0 2px rgba(37,74,165,.10);
+}
+
+.score input:disabled{
+    background:#eef1ec;
+    color:#667169;
+    cursor:not-allowed;
+}
+
+.guide{
+    background:#e9eee3;
+    color:#536057;
+    font-size:11px;
+    padding:13px;
+    margin:19px 0 42px;
+}
+
+/* RANKING - PADRONIZADO COM O APP */
+
+.header-container {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    margin-bottom: 20px;
+}
+
+.header-container .back-button,
+.header-container button:first-child {
+    position: absolute;
+    left: 0;
+    margin: 0;
+}
+
+.header-container .title-wrapper,
+.header-container h1,
+.header-container h2 {
+    text-align: center;
+    margin: 0 auto;
+}
+
+/* --- DEMAIS ESTILOS --- */
+.ranking-table-container{
+    width:100%;
+    overflow-x:auto;
+    border:1px solid #d9ddd2;
+    border-radius:8px;
+    background:#fff;
+    margin-top:15px;
+    box-shadow:0 2px 8px rgba(0,0,0,0.04);
+}
+
+.ranking-table{
+    width:100%;
+    border-collapse:collapse;
+    font-family:Arial,sans-serif;
+    font-size:14px;
+}
+
+.ranking-table th{
+    background-color:#254aa5;
+    color:#fff;
+    font-weight:bold;
+    text-align:center;
+    padding:12px;
+    border-bottom:2px solid #0d3157;
+}
+
+.ranking-table td{
+    padding:10px 12px;
+    border-bottom:1px solid #eef1ec;
+    color:#171717;
+}
+
+.ranking-table td.col-participante{
+    text-align:left;
+    font-weight:600;
+}
+
+.ranking-table td.col-pontuacao{
+    text-align:center;
+    font-weight:bold;
+    color:#254aa5;
+}
+
+.ranking-table td.col-time{
+    text-align:center;
+    color:#667169;
+}
+
+.ranking-table tbody tr:nth-child(even){
+    background-color:#f9fbf8;
+}
+
+.ranking-table tbody tr:hover{
+    background-color:#eef4ff;
+}
+
+.crest{
+    display:block;
+    width:106px;
+    height:106px;
+    object-fit:cover;
+    border-radius:50%;
+    margin:-7px auto 20px;
+    border:3px solid #e2c300;
+    box-shadow:4px 4px 0 #171717;
+}
+
+.prediction-footer{
+    margin:20px 0 24px;
+    padding:16px;
+    background:#fff;
+    border:1px solid #d9ddd2;
+}
+
+.prediction-counter{
+    margin-bottom:12px;
+    font:bold 12px monospace;
+    color:#536057;
+}
+
+.send-button{
+    width:100%;
+    min-height:50px;
+    border:0;
+    border-radius:10px;
+    background:#254aa5;
+    color:#fff;
+    font-size:14px;
+    font-weight:700;
+    cursor:pointer;
+    transition:.2s;
+}
+
+.send-button:disabled{
+    opacity:.55;
+    cursor:not-allowed;
+}
+
+.send-button:not(:disabled):active{
+    transform:scale(.98);
+}
+
+.send-message{
+    margin:10px 0 0;
+    font-size:11px;
+    color:#667169;
+    line-height:1.4;
+}
+
+.send-success{
+    text-align:center;
+    padding:22px 10px;
+}
+
+.send-success-icon{
+    font-size:42px;
+    margin-bottom:10px;
+}
+
+.send-success-title{
+    margin:0 0 8px;
+    color:#28755e;
+    font-size:21px;
+}
+
+.send-success-text{
+    margin:0;
+    color:#667169;
+    font-size:13px;
+    line-height:1.5;
+}
+
+.send-success-small{
+    margin:10px 0 0;
+    color:#8a958c;
+    font-size:11px;
+}
+
+/* CONFIRMAÇÃO */
+
+.send-confirmation{
+    display:none;
+    margin-top:14px;
+    padding:16px;
+    border:1px solid #d9ddd2;
+    border-radius:12px;
+    background:#f8f9f5;
+}
+
+.send-confirmation.show{
+    display:block;
+}
+
+.send-confirmation-title{
+    margin:0 0 8px;
+    color:#0b2340;
+    font-size:16px;
+    font-weight:700;
+}
+
+.send-confirmation-text{
+    margin:0 0 14px;
+    color:#667169;
+    font-size:12px;
+    line-height:1.5;
+}
+
+.send-confirmation-actions{
+    display:flex;
+    gap:10px;
+}
+
+.send-confirmation-actions button{
+    flex:1;
+    min-height:44px;
+    border-radius:9px;
+    font-size:13px;
+    font-weight:700;
+    cursor:pointer;
+}
+
+.send-confirm-cancel{
+    border:1px solid #cfd5cf;
+    background:#fff;
+    color:#536057;
+}
+
+.send-confirm-ok{
+    border:0;
+    background:#254aa5;
+    color:#fff;
+}
+
+
+/* MENU LATERAL */
+
+#menuButton{
+    position:fixed;
+    top:10px;
+    left:14px;
+    z-index:8990;
+    width:44px;
+    height:44px;
+    border:0;
+    border-radius:8px;
+    background:#254aa5;
+    color:#fff;
+    font-size:22px;
+    line-height:44px;
+    cursor:pointer;
+    box-shadow:0 4px 14px rgba(0,0,0,.22);
+    display:none;
+}
+
+#menuButton:active{
+    transform:scale(.96);
+}
+
+#menuOverlay{
+    position:fixed;
+    inset:0;
+    z-index:8998;
+    background:rgba(0,0,0,.45);
+    opacity:0;
+    visibility:hidden;
+    transition:opacity .25s ease;
+}
+
+#sideMenu{
+    position:fixed;
+    top:0;
+    left:0;
+    bottom:0;
+    width:285px;
+    max-width:82vw;
+    z-index:9000;
+    background:#071b33;
+    color:#fff;
+    transform:translateX(-100%);
+    transition:transform .25s ease;
+    box-shadow:5px 0 22px rgba(0,0,0,.3);
+    display:flex;
+    flex-direction:column;
+}
+
+body.side-menu-open #sideMenu{
+    transform:translateX(0);
+}
+
+body.side-menu-open #menuOverlay{
+    opacity:1;
+    visibility:visible;
+}
+
+.side-menu-header{
+    min-height:82px;
+    padding:18px 16px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    border-bottom:1px solid rgba(255,255,255,.12);
+}
+
+.side-menu-title{
+    display:flex;
+    align-items:center;
+    gap:11px;
+    font-family:Arial,sans-serif;
+    font-size:15px;
+    line-height:1.15;
+}
+
+.side-menu-title span{
+    font-size:27px;
+}
+
+.side-menu-close{
+    width:38px;
+    height:38px;
+    border:0;
+    background:transparent;
+    color:#fff;
+    font-size:30px;
+    cursor:pointer;
+}
+
+.side-menu-nav{
+    padding:18px 12px;
+}
+
+.side-menu-item{
+    width:100%;
+    min-height:56px;
+    -webkit-tap-highlight-color:transparent;
+    touch-action:manipulation;
+    margin-bottom:7px;
+    padding:0 15px;
+    border:0;
+    border-radius:7px;
+    background:transparent;
+    color:#fff;
+    display:flex;
+    align-items:center;
+    gap:14px;
+    text-align:left;
+    font:600 14px Arial,sans-serif;
+    cursor:pointer;
+}
+
+.side-menu-item .menu-icon,
+.side-menu-item > span{
+    pointer-events:none;
+}
+
+.side-menu-item:hover,
+.side-menu-item.active{
+    background:#254aa5;
+}
+
+.menu-icon{
+    width:23px;
+    text-align:center;
+    font-size:20px;
+}
+
+.side-menu-footer{
+    margin-top:auto;
+    padding:12px;
+    border-top:1px solid rgba(255,255,255,.12);
+}
+
+.logout-menu-item{
+    color:#e2c300;
+    margin-bottom:0;
+}
+
+.logout-menu-item:hover{
+    background:rgba(226,195,0,.12);
+}
+
+body.app-authenticated #menuButton{
+    display:block;
+}
+
+#loginScreen{
+    z-index:9999;
+}
+
+/* Preferencias visuais: modo escuro */
+body.dark-mode {
+    background: #111827 !important;
+    color: #e5e7eb !important;
+    color-scheme: dark;
+}
+
+body.dark-mode #homeScreen,
+body.dark-mode #rankingScreen,
+body.dark-mode #receiptsScreen,
+body.dark-mode #settingsScreen {
+    color: #e5e7eb;
+}
+
+body.dark-mode .game,
+body.dark-mode .ranking-table tbody tr,
+body.dark-mode #settingsScreen article,
+body.dark-mode [style*="background:#fff"],
+body.dark-mode [style*="background: #fff"],
+body.dark-mode [style*="background:white"],
+body.dark-mode [style*="background: white"] {
+    background: #1f2937 !important;
+    color: #e5e7eb !important;
+    border-color: #374151 !important;
+}
+
+body.dark-mode [style*="color:#667085"],
+body.dark-mode [style*="color: #667085"],
+body.dark-mode [style*="color:#475467"],
+body.dark-mode [style*="color: #475467"],
+body.dark-mode [style*="color:#666"],
+body.dark-mode [style*="color: #666"] {
+    color: #cbd5e1 !important;
+}
+
+body.dark-mode input:not([type="checkbox"]),
+body.dark-mode textarea,
+body.dark-mode select {
+    background-color: #111827;
+    color: #f9fafb;
+    border-color: #4b5563;
+}
+
+body.dark-mode .ranking-table tbody tr:nth-child(even),
+body.dark-mode .ranking-table tbody tr:hover {
+    background-color: #273449 !important;
+}
+
+.settings-preference {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 13px 0;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.settings-preference:last-of-type {
+    border-bottom: 0;
+}
+
+.settings-preference input[type="checkbox"] {
+    width: 21px;
+    height: 21px;
+    flex-shrink: 0;
+    accent-color: #254aa5;
+    cursor: pointer;
+}
+
+body.dark-mode .settings-preference {
+    border-color: #374151;
+}
+
+/* =========================================================
+   MODO ESCURO — PALETA UNIFICADA
+   Fundo suave, cartões azul-acinzentados e boa legibilidade
+   ========================================================= */
+
+body.dark-mode {
+    background: #182333 !important;
+    color: #e4eaf2 !important;
+    color-scheme: dark;
+}
+
+body.dark-mode #homeScreen,
+body.dark-mode #rankingScreen,
+body.dark-mode #receiptsScreen,
+body.dark-mode #settingsScreen {
+    background-color: transparent !important;
+    color: #e4eaf2 !important;
+}
+
+/* Cartões, comprovantes, regras e áreas com fundo branco inline */
+body.dark-mode .game,
+body.dark-mode .ranking-table-container,
+body.dark-mode #settingsScreen article,
+body.dark-mode #receiptsScreen [style*="background:#fff"],
+body.dark-mode #receiptsScreen [style*="background: #fff"],
+body.dark-mode #receiptsScreen [style*="background:#FFF"],
+body.dark-mode #receiptsScreen [style*="background: #FFF"],
+body.dark-mode #receiptsScreen [style*="background:white"],
+body.dark-mode #receiptsScreen [style*="background: white"],
+body.dark-mode #receiptsScreen [style*="background-color:#fff"],
+body.dark-mode #receiptsScreen [style*="background-color: #fff"],
+body.dark-mode #receiptsScreen [style*="background-color: white"],
+body.dark-mode #settingsScreen [style*="background:#fff"],
+body.dark-mode #settingsScreen [style*="background: #fff"],
+body.dark-mode #settingsScreen [style*="background:white"],
+body.dark-mode #settingsScreen [style*="background: white"],
+body.dark-mode #homeScreen [style*="background:#fff"],
+body.dark-mode #homeScreen [style*="background: #fff"],
+body.dark-mode #homeScreen [style*="background:white"],
+body.dark-mode #homeScreen [style*="background: white"],
+body.dark-mode [style*="background:#fff"],
+body.dark-mode [style*="background: #fff"],
+body.dark-mode [style*="background:white"],
+body.dark-mode [style*="background: white"] {
+    background-color: #26364a !important;
+    color: #e4eaf2 !important;
+    border-color: #3a4b61 !important;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12) !important;
+}
+
+/* Textos secundários que ficavam apagados */
+body.dark-mode [style*="color:#666"],
+body.dark-mode [style*="color: #666"],
+body.dark-mode [style*="color:#667169"],
+body.dark-mode [style*="color: #667169"],
+body.dark-mode [style*="color:#667085"],
+body.dark-mode [style*="color: #667085"],
+body.dark-mode [style*="color:#475467"],
+body.dark-mode [style*="color: #475467"],
+body.dark-mode [style*="color:#171717"],
+body.dark-mode [style*="color: #171717"] {
+    color: #c5d0df !important;
+}
+
+/* Ranking: tabela, linhas, cabeçalho e pontuação */
+body.dark-mode .ranking-table-container {
+    background: #26364a !important;
+    border-color: #3a4b61 !important;
+}
+
+body.dark-mode .ranking-table {
+    background: #26364a !important;
+}
+
+body.dark-mode .ranking-table th {
+    background: #254aa5 !important;
+    color: #ffffff !important;
+    border-bottom-color: #183879 !important;
+}
+
+body.dark-mode .ranking-table td {
+    background-color: #26364a !important;
+    color: #e4eaf2 !important;
+    border-bottom-color: #3a4b61 !important;
+}
+
+body.dark-mode .ranking-table tbody tr:nth-child(even) td {
+    background-color: #2d4056 !important;
+}
+
+body.dark-mode .ranking-table tbody tr:hover td {
+    background-color: #354b65 !important;
+}
+
+body.dark-mode .ranking-table td.col-pontuacao {
+    color: #f3d46a !important;
+}
+
+body.dark-mode .ranking-table td.col-time {
+    color: #c5d0df !important;
+}
+
+/* Regras de pontuação e listas de configurações */
+body.dark-mode #settingsScreen ul,
+body.dark-mode #settingsScreen li,
+body.dark-mode #settingsScreen p,
+body.dark-mode #settingsScreen h2,
+body.dark-mode #settingsScreen h3,
+body.dark-mode #receiptsScreen p,
+body.dark-mode #receiptsScreen h2,
+body.dark-mode #receiptsScreen h3 {
+    color: #e4eaf2;
+}
+
+body.dark-mode #settingsScreen article,
+body.dark-mode .settings-preference {
+    background-color: #26364a !important;
+    border-color: #3a4b61 !important;
+}
+
+/* Campos de entrada */
+body.dark-mode input:not([type="checkbox"]),
+body.dark-mode textarea,
+body.dark-mode select {
+    background-color: #1d2a3b !important;
+    color: #e4eaf2 !important;
+    border-color: #465a72 !important;
+}
+
+body.dark-mode input::placeholder,
+body.dark-mode textarea::placeholder {
+    color: #aab8ca !important;
+}
+
+/* Botões dos comprovantes mantêm o azul da identidade visual */
+body.dark-mode #receiptsScreen button {
+    color: #ffffff;
+}
+
+body.dark-mode #receiptsScreen button[style*="background:#254aa5"],
+body.dark-mode #receiptsScreen button[style*="background: #254aa5"] {
+    background-color: #254aa5 !important;
+    color: #ffffff !important;
+}
+
+/* Bordas discretas em elementos com estilos inline */
+body.dark-mode #receiptsScreen [style*="border"],
+body.dark-mode #homeScreen [style*="border"] {
+    border-color: #3a4b61;
+}
+/* CORRECAO BOTOES MODO ESCURO */
+
+/* Botão Enviar palpites, inclusive quando desabilitado */
+body.dark-mode button.send-button,
+body.dark-mode button#sendPredictionsButton {
+    background: #254aa5 !important;
+    background-color: #254aa5 !important;
+    color: #ffffff !important;
+    border: 1px solid #3c62b8 !important;
+}
+
+body.dark-mode button.send-button:disabled,
+body.dark-mode button#sendPredictionsButton:disabled {
+    opacity: 0.78 !important;
+    color: #ffffff !important;
+}
+
+/* Botões dinâmicos de seleção dos comprovantes */
+body.dark-mode #receiptsScreen #receiptRounds > button {
+    background: #2d4056 !important;
+    background-color: #2d4056 !important;
+    color: #e4eaf2 !important;
+    border: 1px solid #465a72 !important;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.12) !important;
+}
+
+body.dark-mode #receiptsScreen #receiptRounds > button strong {
+    color: #f1f5f9 !important;
+}
+
+body.dark-mode #receiptsScreen #receiptRounds > button span {
+    color: #c5d0df !important;
+}
+/* CORRECAO FINAL ENVIAR E REGRAS MODO ESCURO */
+
+/* Botão Enviar palpites: preservar azul mesmo desabilitado */
+body.dark-mode .send-button,
+body.dark-mode #homeScreen #sendPredictionsButton {
+    background: #254aa5 !important;
+    background-color: #254aa5 !important;
+    background-image: none !important;
+    color: #ffffff !important;
+    border: 1px solid #496bc0 !important;
+    opacity: 1 !important;
+}
+
+body.dark-mode .send-button:disabled,
+body.dark-mode #homeScreen #sendPredictionsButton:disabled {
+    background: #254aa5 !important;
+    background-color: #254aa5 !important;
+    color: #ffffff !important;
+    opacity: 0.78 !important;
+}
+
+/* Cartão e regras de pontuação nas configurações */
+body.dark-mode #settingsScreen article {
+    background: #26364a !important;
+    background-color: #26364a !important;
+    color: #e4eaf2 !important;
+    border-color: #3a4b61 !important;
+}
+
+body.dark-mode #settingsScreen article h3,
+body.dark-mode #settingsScreen article ul,
+body.dark-mode #settingsScreen article li,
+body.dark-mode #settingsScreen article p,
+body.dark-mode #settingsScreen article div {
+    color: #e4eaf2 !important;
+}
+
+/* Evitar que cores inline deixem os textos apagados */
+body.dark-mode #settingsScreen article ul[style],
+body.dark-mode #settingsScreen article li[style],
+body.dark-mode #settingsScreen article p[style],
+body.dark-mode #settingsScreen article div[style] {
+    color: #e4eaf2 !important;
+}
+/* CORRECAO DEFINITIVA RODAPE MODO ESCURO */
+
+body.dark-mode #predictionFooter,
+body.dark-mode .prediction-footer {
+    background: #26364a !important;
+    background-color: #26364a !important;
+    background-image: none !important;
+    color: #e4eaf2 !important;
+    border: 1px solid #3a4b61 !important;
+    box-shadow: none !important;
+}
+
+body.dark-mode #predictionCounter,
+body.dark-mode .prediction-counter {
+    background: transparent !important;
+    background-color: transparent !important;
+    color: #e4eaf2 !important;
+}
+
+body.dark-mode #predictionFooter .send-message,
+body.dark-mode #predictionFooter .send-confirmation-title,
+body.dark-mode #predictionFooter .send-confirmation-text {
+    color: #e4eaf2 !important;
+}
+/* CORRECAO PAINEL COMO PONTUAR MODO ESCURO */
+
+body.dark-mode .guide {
+    background: #26364a !important;
+    background-color: #26364a !important;
+    background-image: none !important;
+    color: #e4eaf2 !important;
+    border-color: #3a4b61 !important;
+    box-shadow: none !important;
+}
+
+body.dark-mode .guide b,
+body.dark-mode .guide strong {
+    color: #ffffff !important;
+}
+/* CORRECAO TELAS AUTENTICACAO MODO ESCURO */
+
+body.dark-mode #loginScreen .login-card {
+    background: #17283d !important;
+    background-color: #17283d !important;
+    color: #e4eaf2 !important;
+    border: 1px solid #34475e !important;
+    box-shadow: 0 12px 35px rgba(0,0,0,.35) !important;
+}
+
+body.dark-mode #loginScreen .login-title,
+body.dark-mode #loginScreen .login-subtitle,
+body.dark-mode #loginScreen .login-footer,
+body.dark-mode #loginScreen label {
+    color: #e4eaf2 !important;
+}
+
+body.dark-mode #loginScreen .login-input {
+    background: #22354b !important;
+    background-color: #22354b !important;
+    color: #f3f6fa !important;
+    border-color: #465b73 !important;
+    caret-color: #ffffff !important;
+}
+
+body.dark-mode #loginScreen .login-input::placeholder {
+    color: #b5c1d0 !important;
+    opacity: 1 !important;
+}
+
+body.dark-mode #loginScreen .login-input:focus {
+    border-color: #82aaff !important;
+    box-shadow: 0 0 0 2px rgba(130,170,255,.2) !important;
+}
+
+body.dark-mode #loginScreen .google-login-button {
+    background: #22354b !important;
+    color: #f3f6fa !important;
+    border-color: #465b73 !important;
+}
+
+body.dark-mode #loginScreen .create-account-button {
+    color: #ffffff !important;
+}
+
+body.dark-mode #loginScreen .back-login-button {
+    color: #a9c5ff !important;
+}
+
+body.dark-mode #loginScreen .password-toggle {
+    color: #dce6f3 !important;
+}
+
+body.dark-mode #loginScreen .register-error {
+    color: #ff9b9b !important;
+}
+
+body.dark-mode #loginScreen .register-success {
+    color: #86e0b4 !important;
+}
+
+body.dark-mode #loginScreen #passwordRecoverySuccess,
+body.dark-mode #loginScreen #newPasswordSuccess {
+    color: #86e0b4 !important;
+}
+
+body.dark-mode #loginScreen .login-button {
+    color: #ffffff !important;
+}
+</style>
+
+</head>
+
+<body>
+
+
+<!-- ============================================================
+MENU LATERAL
+============================================================ -->
+
+<div id="menuOverlay" onclick="closeSideMenu()"></div>
+
+<aside id="sideMenu">
+
+    <div class="side-menu-header">
+
+        <div class="side-menu-title">
+            <span>⚽</span>
+            <strong>Brasileirão<br>da Depressão</strong>
+        </div>
+
+        <button
+            type="button"
+            class="side-menu-close"
+            onclick="closeSideMenu()">
+            ×
+        </button>
+
+    </div>
+
+    <nav class="side-menu-nav">
+
+        <button
+            type="button"
+            id="navHome"
+            class="side-menu-item active"
+            onclick="showHomeFromMenu()">
+
+            <span class="menu-icon">⌂</span>
+            <span>Tela inicial</span>
+
+        </button>
+
+        <button
+            type="button"
+            id="navRanking"
+            class="side-menu-item"
+            onclick="showRankingFromMenu()">
+
+            <span class="menu-icon">🏆</span>
+            <span>Ranking</span>
+
+        </button>
+
+        <button
+            type="button"
+            id="navReceipts"
+            class="side-menu-item"
+            onclick="showReceiptsFromMenu()">
+
+            <span class="menu-icon">▣</span>
+            <span>Comprovantes</span>
+
+        </button>
+
+        <button
+            type="button"
+            id="navSettings"
+            class="side-menu-item"
+            onclick="showSettingsFromMenu()">
+            <span class="menu-icon">⚙</span>
+            <span>Configurações</span>
+        </button>
+
+    </nav>
+
+    <div class="side-menu-footer">
+
+        <button
+            type="button"
+            class="side-menu-item logout-menu-item"
+            onclick="logoutFromMenu()">
+
+            <span class="menu-icon">↪</span>
+            <span>Sair</span>
+
+        </button>
+
+    </div>
+
+</aside>
+
+<button
+    id="menuButton"
+    type="button"
+    onclick="openSideMenu()"
+    aria-label="Abrir menu">
+
+    ☰
+
+</button>
+
+
+<!-- ============================================================
+LOGIN
+============================================================ -->
+
+<div id="loginScreen">
+
+<div class="login-card">
+
+<img
+    src="images/logo-azul-removebg-preview.png"
+    class="login-logo"
+    alt="Brasileirão da Depressão">
+
+<div id="loginForm">
+
+<h1 class="login-title">
+    Brasileirão da Depressão
+</h1>
+
+<p class="login-subtitle">
+    Entre para salvar seus palpites,<br>
+    acompanhar o ranking e disputar com a galera.
+</p>
+
+<button
+    type="button"
+    id="googleLoginButton"
+    class="google-login-button"
+    onclick="loginGoogle()">
+
+    <svg
+        class="google-icon"
+        viewBox="0 0 24 24"
+        xmlns="http://www.w3.org/2000/svg">
+
+        <path
+            fill="#4285F4"
+            d="M21.35 12.27c0-.79-.07-1.55-.22-2.27H12v4.3h5.24a4.48 4.48 0 0 1-1.94 2.94v2.45h3.14c1.84-1.69 2.91-4.18 2.91-7.42z"/>
+
+        <path
+            fill="#34A853"
+            d="M12 21.5c2.63 0 4.84-.87 6.45-2.36l-3.14-2.45c-.87.58-1.98.93-3.31.93-2.55 0-4.71-1.72-5.49-4.03H3.27v2.53A9.74 9.74 0 0 0 12 21.5z"/>
+
+        <path
+            fill="#FBBC05"
+            d="M6.51 13.59A5.86 5.86 0 0 1 6.2 12c0-.55.1-1.08.31-1.59V7.88H3.27A9.5 9.5 0 0 0 2.25 12c0 1.53.37 2.97 1.02 4.12l3.24-2.53z"/>
+
+        <path
+            fill="#EA4335"
+            d="M12 6.38c1.43 0 2.71.49 3.72 1.46l2.79-2.79C16.83 3.47 14.63 2.5 12 2.5a9.74 9.74 0 0 0-8.73 5.38l3.24 2.53c1.01-2.31 3.17-4.03 5.72-4.03z"/>
+
+    </svg>
+
+    Continuar com Google
+
+</button>
+
+<div class="login-divider">
+    <span>ou</span>
+</div>
+
+<input
+    id="loginEmail"
+    class="login-input"
+    type="email"
+    placeholder="Seu e-mail"
+    autocomplete="email">
+
+<div class="password-field">
+    <input
+        id="loginPassword"
+        class="login-input"
+        type="password"
+        placeholder="Sua senha"
+        autocomplete="current-password">
+    <button type="button" class="password-toggle"
+        aria-label="Mostrar senha" aria-pressed="false"
+        onclick="togglePasswordVisibility('loginPassword', this)">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"
+                fill="none" stroke="currentColor" stroke-width="2"/>
+            <circle cx="12" cy="12" r="3"
+                fill="none" stroke="currentColor" stroke-width="2"/>
+        </svg>
+    </button>
+</div>
+
+<button
+    type="button"
+    class="create-account-button"
+    style="margin-top:8px"
+    onclick="showForgotPassword()">
+    Esqueci minha senha
+</button>
+
+<p
+    id="loginError"
+    class="register-error">
+</p>
+
+<button
+    type="button"
+    id="loginButton"
+    class="login-button"
+    onclick="loginUser()">
+
+    Entrar
+
+</button>
+
+<button
+    type="button"
+    class="create-account-button"
+    style="margin-top:10px"
+    onclick="showRegister()">
+
+    Criar uma conta
+
+</button>
+
+<div class="login-footer">
+
+    Seus dados de conta ficam armazenados com segurança no servidor.
+
+</div>
+
+</div>
+
+
+<!-- RECUPERAR SENHA -->
+
+<div id="passwordRecoveryForm" style="display:none">
+
+    <h1 class="login-title">Recuperar senha</h1>
+
+    <p class="login-subtitle">
+        Informe seu e-mail para receber as instruções de recuperação.
+    </p>
+
+    <input
+        id="recoveryEmail"
+        class="login-input"
+        type="email"
+        placeholder="Seu e-mail"
+        autocomplete="email"
+        required>
+
+    <p id="passwordRecoveryError" class="register-error"></p>
+
+    <p id="passwordRecoverySuccess"
+       style="display:none;color:#16803c;font-size:14px">
+    </p>
+
+    <button
+        type="button"
+        id="sendRecoveryButton"
+        class="login-button"
+        onclick="sendPasswordRecovery()">
+        Enviar link de recuperação
+    </button>
+
+    <button
+        type="button"
+        class="create-account-button"
+        style="margin-top:10px"
+        onclick="showLogin()">
+        Voltar ao login
+    </button>
+
+</div>
+
+<!-- DEFINIR NOVA SENHA -->
+
+<div id="newPasswordForm" style="display:none">
+
+    <h1 class="login-title">Criar nova senha</h1>
+
+    <p class="login-subtitle">
+        Escolha uma nova senha para sua conta.
+    </p>
+
+    <div id="newPasswordFields">
+
+        <div class="password-field">
+            <input
+                id="newPassword"
+                class="login-input"
+                type="password"
+                placeholder="Nova senha"
+                autocomplete="new-password"
+                minlength="6"
+                required>
+            <button type="button" class="password-toggle"
+                aria-label="Mostrar senha" aria-pressed="false"
+                onclick="togglePasswordVisibility('newPassword', this)">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"
+                        fill="none" stroke="currentColor" stroke-width="2"/>
+                    <circle cx="12" cy="12" r="3"
+                        fill="none" stroke="currentColor" stroke-width="2"/>
+                </svg>
+            </button>
+        </div>
+
+        <div class="password-field">
+            <input
+                id="confirmNewPassword"
+                class="login-input"
+                type="password"
+                placeholder="Confirme a nova senha"
+                autocomplete="new-password"
+                minlength="6"
+                required>
+            <button type="button" class="password-toggle"
+                aria-label="Mostrar senha" aria-pressed="false"
+                onclick="togglePasswordVisibility('confirmNewPassword', this)">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"
+                        fill="none" stroke="currentColor" stroke-width="2"/>
+                    <circle cx="12" cy="12" r="3"
+                        fill="none" stroke="currentColor" stroke-width="2"/>
+                </svg>
+            </button>
+        </div>
+
+        <p id="newPasswordError" class="register-error"></p>
+
+        <button
+            type="button"
+            id="saveNewPasswordButton"
+            class="login-button"
+            onclick="saveNewPassword()">
+            Salvar nova senha
+        </button>
+
+    </div>
+
+    <p id="newPasswordSuccess"
+       style="display:none;color:#16803c;font-size:14px">
+    </p>
+
+    <button
+        type="button"
+        id="newPasswordDoneButton"
+        class="create-account-button"
+        style="display:none;margin-top:10px"
+        onclick="showLogin()">
+        Voltar ao login
+    </button>
+
+</div>
+
+<!-- CADASTRO -->
+
+<div
+    id="registerForm"
+    style="display:none">
+
+<h1 class="login-title">
+    Criar conta
+</h1>
+
+<p class="login-subtitle">
+    Crie seu perfil e escolha seu clube do coração.
+</p>
+
+<form onsubmit="createAccount(event)">
+
+<input
+    id="registerFullName"
+    class="login-input"
+    type="text"
+    placeholder="Nome e sobrenome"
+    autocomplete="name"
+    maxlength="100"
+    required>
+
+<input
+    id="registerEmail"
+    class="login-input"
+    type="email"
+    placeholder="Seu e-mail"
+    autocomplete="email"
+    required>
+
+<div class="password-field">
+    <input
+        id="registerPassword"
+        class="login-input"
+        type="password"
+        placeholder="Senha"
+        autocomplete="new-password"
+        minlength="6"
+        required>
+    <button type="button" class="password-toggle"
+        aria-label="Mostrar senha" aria-pressed="false"
+        onclick="togglePasswordVisibility('registerPassword', this)">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"
+                fill="none" stroke="currentColor" stroke-width="2"/>
+            <circle cx="12" cy="12" r="3"
+                fill="none" stroke="currentColor" stroke-width="2"/>
+        </svg>
+    </button>
+</div>
+
+<div class="password-field">
+    <input
+        id="registerPasswordConfirm"
+        class="login-input"
+        type="password"
+        placeholder="Confirme sua senha"
+        autocomplete="new-password"
+        minlength="6"
+        required>
+    <button type="button" class="password-toggle"
+        aria-label="Mostrar senha" aria-pressed="false"
+        onclick="togglePasswordVisibility('registerPasswordConfirm', this)">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"
+                fill="none" stroke="currentColor" stroke-width="2"/>
+            <circle cx="12" cy="12" r="3"
+                fill="none" stroke="currentColor" stroke-width="2"/>
+        </svg>
+    </button>
+</div>
+
+<select
+    id="registerClub"
+    class="login-input"
+    required>
+
+<option value="">
+    Clube do coração
+</option>
+
+<option value="Atlético-MG">Atlético-MG</option>
+<option value="Athletico-PR">Athletico-PR</option>
+<option value="Bahia">Bahia</option>
+<option value="Botafogo">Botafogo</option>
+<option value="Red Bull Bragantino">Red Bull Bragantino</option>
+<option value="Chapecoense">Chapecoense</option>
+<option value="Corinthians">Corinthians</option>
+<option value="Coritiba">Coritiba</option>
+<option value="Cruzeiro">Cruzeiro</option>
+<option value="Flamengo">Flamengo</option>
+<option value="Fluminense">Fluminense</option>
+<option value="Grêmio">Grêmio</option>
+<option value="Internacional">Internacional</option>
+<option value="Mirassol">Mirassol</option>
+<option value="Palmeiras">Palmeiras</option>
+<option value="Remo">Remo</option>
+<option value="Santos">Santos</option>
+<option value="São Paulo">São Paulo</option>
+<option value="Vasco">Vasco</option>
+<option value="Vitória">Vitória</option>
+
+</select>
+
+<p id="registerError" class="register-error"></p>
+
+<p id="registerSuccess" class="register-success"></p>
+
+<button
+    type="submit"
+    id="registerButton"
+    class="create-account-button">
+
+    Criar minha conta
+
+</button>
+
+</form>
+
+<button
+    type="button"
+    class="back-login-button"
+    onclick="showLogin()">
+
+    ← Voltar para o login
+
+</button>
+
+</div>
+
+</div>
+
+</div>
+
+
+<!-- ============================================================
+ESCOLHA O TIME DO CORAÇÃO
+============================================================ -->
+
+<div id="clubRequiredScreen">
+
+    <div class="club-required-card">
+
+        <div class="club-required-icon">
+            ⚽
+        </div>
+
+        <h1 class="club-required-title">
+            Complete seu perfil
+        </h1>
+
+        <p class="club-required-text">
+            Informe seu nome completo e escolha seu time do coração para continuar no
+            <b>Brasileirão da Depressão</b>.
+        </p>
+
+        <p
+            id="clubRequiredEmail"
+            class="club-required-email">
+        </p>
+
+        <input
+            id="requiredFullName"
+            class="login-input"
+            type="text"
+            placeholder="Nome e sobrenome"
+            autocomplete="name"
+            maxlength="100"
+            required>
+
+        <select
+            id="requiredClub"
+            class="login-input">
+
+            <option value="">
+                Escolha seu time do coração
+            </option>
+
+            <option value="Atlético-MG">Atlético-MG</option>
+            <option value="Athletico-PR">Athletico-PR</option>
+            <option value="Bahia">Bahia</option>
+            <option value="Botafogo">Botafogo</option>
+            <option value="Red Bull Bragantino">Red Bull Bragantino</option>
+            <option value="Chapecoense">Chapecoense</option>
+            <option value="Corinthians">Corinthians</option>
+            <option value="Coritiba">Coritiba</option>
+            <option value="Cruzeiro">Cruzeiro</option>
+            <option value="Flamengo">Flamengo</option>
+            <option value="Fluminense">Fluminense</option>
+            <option value="Grêmio">Grêmio</option>
+            <option value="Internacional">Internacional</option>
+            <option value="Mirassol">Mirassol</option>
+            <option value="Palmeiras">Palmeiras</option>
+            <option value="Remo">Remo</option>
+            <option value="Santos">Santos</option>
+            <option value="São Paulo">São Paulo</option>
+            <option value="Vasco">Vasco</option>
+            <option value="Vitória">Vitória</option>
+
+        </select>
+
+        <p
+            id="clubRequiredError"
+            class="club-required-error">
+        </p>
+
+        <button
+            type="button"
+            id="saveRequiredClubButton"
+            class="club-required-button"
+            onclick="saveRequiredClub()"
+            disabled>
+
+            CONTINUAR
+
+        </button>
+
+        <p class="club-required-note">
+
+            Essa escolha ficará vinculada ao seu perfil
+            e poderá ser utilizada na pontuação do
+            clube do coração.
+
+        </p>
+
+        <button
+            type="button"
+            class="club-required-logout"
+            onclick="logoutUser()">
+
+            Sair da conta
+
+        </button>
+
+    </div>
+
+</div>
+
+
+<header class="top">
+
+<span class="mark">
+    B
+</span>
+
+Brasileirão da Depressão
+
+</header>
+
+
+<section
+    class="hero"
+    id="heroSection"
+    data-round="">
+
+<p
+    class="eyebrow"
+    id="roundEyebrow">
+
+    CAMPEONATO BRASILEIRO · CARREGANDO RODADA...
+
+</p>
+
+<h1>
+    Seus palpites,<br>
+    <i>sua torcida.</i>
+</h1>
+
+<p class="intro">
+    Acerte os placares, suba no ranking e prove que você entende de futebol.
+</p>
+
+<div class="timer">
+
+    PALPITES ENCERRAM EM
+
+    <b id="clock">
+        --d --:--:--
+    </b>
+
+    <span id="roundDate">
+        Carregando informações da rodada...
+    </span>
+
+</div>
+
+</section>
+
+<img
+    class="crest"
+    src="images/logo-azul.jpeg"
+    alt="Logo">
+
+
+<!-- ============================================================
+HOME
+============================================================ -->
+
+<main id="homeScreen" class="main">
+
+<div class="head">
+
+<div>
+
+<p
+    class="eyebrow"
+    style="color:#254aa5">
+
+    SELECIONE OS PLACARES
+
+</p>
+
+<h2>
+    Jogos da rodada
+</h2>
+
+</div>
+
+<span
+    id="status"
+    class="hint">
+
+    Conectando...
+
+</span>
+
+</div>
+
+<div id="games"></div>
+
+<div
+    id="predictionFooter"
+    class="prediction-footer">
+
+<div
+    id="predictionCounter"
+    class="prediction-counter">
+
+    0 de 0 palpites preenchidos
+
+</div>
+
+<button
+    id="sendPredictionsButton"
+    class="send-button"
+    type="button"
+    onclick="sendPredictions()"
+    disabled>
+
+    ENVIAR PALPITES
+
+</button>
+
+<p
+    id="sendPredictionsMessage"
+    class="send-message">
+</p>
+
+<div
+    id="sendConfirmation"
+    class="send-confirmation">
+
+    <p class="send-confirmation-title">
+        Confirmar envio dos palpites?
+    </p>
+
+    <p class="send-confirmation-text">
+        Depois de confirmar, os palpites desta rodada não poderão mais ser alterados.
+    </p>
+
+    <div class="send-confirmation-actions">
+
+        <button
+            type="button"
+            id="cancelSendButton"
+            class="send-confirm-cancel">
+
+            CANCELAR
+
+        </button>
+
+        <button
+            type="button"
+            id="confirmSendButton"
+            class="send-confirm-ok">
+
+            CONFIRMAR ENVIO
+
+        </button>
+
+    </div>
+
+</div>
+
+</div>
+
+<p class="guide">
+
+<b>Como pontuar:</b>
+
+Acertar o vencedor sem cravar o placar = 2 pontos ·
+Acertar um empate sem cravar o placar = 1 ponto ·
+Cravar o placar exato = +1 ponto ·
+Cravar o placar exato do time do coração em uma vitória ou derrota = +1 ponto adicional ·
+Empate com placar exato = 2 pontos no total ·
+Errar o resultado = 0 pontos
+
+</p>
+
+</main>
+
+
+<!-- ============================================================
+RANKING
+============================================================ -->
+
+<section
+    id="rankingScreen"
+    style="display:none;padding:0 16px 44px;">
+
+    <div
+        style="display:flex;align-items:center;justify-content:center;position:relative;margin-bottom:20px;">
+
+        <button
+            type="button"
+            onclick="showHomeFromMenu()"
+            style="position:absolute;left:0;border:0;background:#254aa5;color:#fff;border-radius:10px;padding:10px 14px;font-size:20px;cursor:pointer;">
+
+            ←
+
+        </button>
+
+        <div style="display:flex;flex-direction:column;align-items:center;text-align:center;">
+
+            <div
+                class="eyebrow"
+                style="color:#254aa5;margin-bottom:2px;text-align:center;">
+
+                DISPUTA ACIRRADA
+
+            </div>
+
+            <h1 style="margin:0;text-align:center;">
+                Ranking da galera
+            </h1>
+
+        </div>
+
+    </div>
+
+    <div class="ranking-table-container">
+
+        <table class="ranking-table">
+
+            <thead>
+
+                <tr>
+
+                    <th>
+                        Participante
+                    </th>
+
+                    <th>
+                        Pontuação
+                    </th>
+
+                    <th>
+                        Time
+                    </th>
+
+                </tr>
+
+            </thead>
+
+            <tbody id="rankingTableBody">
+
+                <tr>
+
+                    <td
+                        colspan="3"
+                        style="text-align:center;padding:20px;">
+
+                        Carregando ranking...
+
+                    </td>
+
+                </tr>
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</section>
+
+
+<!-- ============================================================
+COMPROVANTES
+============================================================ -->
+
+<section
+    id="receiptsScreen"
+    style="display:none;padding:0 16px 44px;">
+
+    <div
+        style="display:flex;align-items:center;justify-content:center;position:relative;margin-bottom:20px;">
+
+        <button
+            type="button"
+            onclick="showHomeFromReceipts()"
+            style="position:absolute;left:0;border:0;background:#254aa5;color:#fff;border-radius:10px;padding:10px 14px;font-size:20px;cursor:pointer;">
+
+            ←
+
+        </button>
+
+        <div style="text-align:center;">
+
+            <div
+                class="eyebrow"
+                style="color:#254aa5;margin-bottom:2px;">
+
+                PALPITES
+
+            </div>
+
+            <h1 style="margin:0;font-size:26px;">
+                Comprovantes
+            </h1>
+
+        </div>
+
+    </div>
+
+    <div
+        id="receiptsList"
+        style="margin-top:20px;">
+
+        <p>
+            Carregando comprovantes...
+        </p>
+
+    </div>
+
+    <div
+        id="receiptDetail"
+        style="display:none;margin-top:20px;">
+    </div>
+
+</section>
+
+<!-- ============================================================
+CONFIGURACOES
+============================================================ -->
+
+<section
+    id="settingsScreen"
+    style="display:none;padding:0 16px 44px;">
+
+    <div style="padding:24px 0 12px;">
+        <div style="font-size:11px;font-weight:800;letter-spacing:2px;color:#254aa5;">
+            BRASILEIRAO DA DEPRESSAO
+        </div>
+        <h1 style="margin:8px 0 4px;font-size:26px;">
+            Configurações
+        </h1>
+        <p style="margin:0;color:#667085;font-size:14px;">
+            Personalize sua experiência no aplicativo.
+        </p>
+    </div>
+
+    <div style="display:grid;gap:14px;margin-top:16px;">
+
+        <article style="background:var(--settings-card,#fff);border:1px solid #e5e7eb;border-radius:16px;padding:18px;">
+            <h2 style="font-size:17px;margin:0 0 14px;">Minha conta</h2>
+
+            <div style="margin-bottom:12px;">
+                <div style="font-size:12px;color:#667085;">Nome completo</div>
+                <div id="settingsName" style="font-weight:600;margin-top:4px;overflow-wrap:anywhere;">Carregando...</div>
+            </div>
+
+            <div style="margin-bottom:12px;">
+                <div style="font-size:12px;color:#667085;">E-mail</div>
+                <div id="settingsEmail" style="font-weight:600;margin-top:4px;overflow-wrap:anywhere;">Carregando...</div>
+            </div>
+
+            <div>
+                <div style="font-size:12px;color:#667085;">Time do coração</div>
+                <div id="settingsClub" style="font-weight:600;margin-top:4px;">Carregando...</div>
+            </div>
+        </article>
+
+        <article style="background:var(--settings-card,#fff);border:1px solid #e5e7eb;border-radius:16px;padding:18px;">
+            <h2 style="font-size:17px;margin:0 0 8px;">Notificações</h2>
+            <p style="font-size:14px;color:#667085;line-height:1.5;margin:0;">
+                Preferências de avisos e lembretes. Os avisos serão disponibilizados quando o mecanismo de notificações estiver implementado.
+            </p>
+        </article>
+
+        <article style="background:var(--settings-card,#fff);border:1px solid #e5e7eb;border-radius:16px;padding:18px;">
+            <h2 style="font-size:17px;margin:0 0 8px;">Privacidade e segurança</h2>
+            <p style="font-size:14px;color:#667085;line-height:1.5;margin:0;">
+                Sua conta utiliza autenticação. As opções disponíveis nesta seção serão limitadas aos recursos efetivamente implementados.
+            </p>
+        </article>
+
+        <article style="background:var(--settings-card,#fff);border:1px solid #e5e7eb;border-radius:16px;padding:18px;">
+            <h2 style="font-size:17px;margin:0 0 8px;">Preferências do aplicativo</h2>
+            <div class="settings-preference">
+                <div>
+                    <div style="font-weight:600;">Modo escuro</div>
+                    <div style="font-size:13px;color:#667085;margin-top:4px;">Alterar a aparência do aplicativo</div>
+                </div>
+                <input
+                    id="settingDarkMode"
+                    type="checkbox"
+                    aria-label="Ativar modo escuro"
+                    onchange="setAppPreference('darkMode', this.checked)">
+            </div>
+
+            <div class="settings-preference">
+                <div>
+                    <div style="font-weight:600;">Efeitos sonoros</div>
+                    <div style="font-size:13px;color:#667085;margin-top:4px;">Preferência para sons quando disponíveis</div>
+                </div>
+                <input
+                    id="settingSound"
+                    type="checkbox"
+                    aria-label="Ativar efeitos sonoros"
+                    onchange="setAppPreference('sound', this.checked)">
+            </div>
+
+            <p id="settingsSoundStatus" style="font-size:12px;color:#667085;line-height:1.5;margin:10px 0 0;">
+                Ative esta opção para ouvir os efeitos sonoros do aplicativo.
+            </p>
+        </article>
+
+        <article style="background:var(--settings-card,#fff);border:1px solid #e5e7eb;border-radius:16px;padding:18px;">
+            <h2 style="font-size:17px;margin:0 0 8px;">Sobre o aplicativo</h2>
+            <p style="font-size:14px;color:#667085;margin:0 0 14px;">
+                Brasileirão da Depressão
+            </p>
+
+            <div style="font-size:12px;color:#667085;margin-bottom:14px;">
+                Versão: informação ainda não definida no aplicativo.
+            </div>
+
+            <h3 style="font-size:15px;margin:0 0 8px;">Regras de pontuação</h3>
+            <ul style="font-size:14px;color:#475467;line-height:1.7;padding-left:20px;margin:0;">
+                <li>Acertar o vencedor sem cravar o placar: 2 pontos.</li>
+                <li>Acertar um empate sem cravar o placar: 1 ponto.</li>
+                <li>Cravar o placar exato: +1 ponto de bônus.</li>
+                <li>Cravar o placar exato do time do coração em uma vitória ou derrota: +1 ponto de bônus adicional.</li>
+                <li>Cravar o placar exato de um empate: 2 pontos no total (1 pelo empate + 1 pelo placar exato).</li>
+                <li>Errar o resultado: 0 pontos.</li>
+            </ul>
+        </article>
+
+    </div>
+</section>
+
+<script>
+
+/* ============================================================
+PREFERENCIAS LOCAIS DO APLICATIVO
+============================================================ */
+
+function playAppSound(fileName){
+
+    if(!getAppPreferences().sound){
+        console.log("[SONS] Som desativado nas preferências.");
+        return;
+    }
+
+    try {
+        const audio = new Audio("sounds/" + fileName);
+        audio.volume = 0.7;
+
+        audio.addEventListener("canplay", function(){
+            console.log("[SONS] Áudio carregado:", audio.currentSrc);
+        }, { once: true });
+
+        audio.addEventListener("playing", function(){
+            console.log("[SONS] REPRODUÇÃO INICIADA:", audio.currentSrc);
+        }, { once: true });
+
+        audio.addEventListener("error", function(){
+            console.error(
+                "[SONS] ERRO AO CARREGAR:",
+                fileName,
+                "URL:", audio.currentSrc,
+                "Código:", audio.error ? audio.error.code : "indisponível"
+            );
+        }, { once: true });
+
+        console.log("[SONS] Tentando reproduzir:", audio.src);
+
+        const reproducao = audio.play();
+
+        if(reproducao && typeof reproducao.then === "function"){
+            reproducao.then(function(){
+                console.log("[SONS] Promise de reprodução resolvida:", fileName);
+            }).catch(function(error){
+                console.error("[SONS] Falha na reprodução:", fileName, error.name, error.message);
+            });
+        }
+
+    } catch(error) {
+        console.error("[SONS] Exceção ao iniciar áudio:", error.name, error.message);
+    }
+}
+
+document.addEventListener("click", function(event){
+
+    const botao = event.target.closest(
+        'button, [role="button"]'
+    );
+
+    console.log(
+        "[SONS] Clique detectado:",
+        botao ? botao.id : "nenhum botão identificado",
+        "preferência:",
+        getAppPreferences().sound
+    );
+
+    if(botao && !botao.disabled){
+        playAppSound("som-toque.wav");
+    }
+});
+const APP_PREFERENCES_KEY = "brasileirao_depressao_preferences";
+
+function getAppPreferences(){
+
+    const defaults = {
+        darkMode: false,
+        sound: false
+    };
+
+    try {
+        const saved = localStorage.getItem(APP_PREFERENCES_KEY);
+
+        if(saved){
+            return {
+                ...defaults,
+                ...JSON.parse(saved)
+            };
+        }
+    } catch(error) {
+        console.warn("Não foi possível ler as preferências locais.", error);
+    }
+
+    return defaults;
+}
+
+function saveAppPreferences(preferences){
+
+    try {
+        localStorage.setItem(
+            APP_PREFERENCES_KEY,
+            JSON.stringify(preferences)
+        );
+        return true;
+    } catch(error) {
+        console.warn("Não foi possível salvar as preferências locais.", error);
+        return false;
+    }
+}
+
+function applyAppPreferences(){
+
+    const preferences = getAppPreferences();
+
+    document.body.classList.toggle(
+        "dark-mode",
+        preferences.darkMode === true
+    );
+
+    const darkControl = document.getElementById("settingDarkMode");
+    const soundControl = document.getElementById("settingSound");
+
+    if(darkControl){
+        darkControl.checked = preferences.darkMode === true;
+    }
+
+    if(soundControl){
+        soundControl.checked = preferences.sound === true;
+    }
+
+    const soundStatus = document.getElementById("settingsSoundStatus");
+
+    if(soundStatus){
+        soundStatus.textContent = preferences.sound
+            ? "Efeitos sonoros ativados."
+            : "Efeitos sonoros desativados. Ative esta opção para ouvir os sons.";
+    }
+}
+
+function setAppPreference(key, value){
+
+    if(key !== "darkMode" && key !== "sound"){
+        return;
+    }
+
+    const preferences = getAppPreferences();
+    preferences[key] = Boolean(value);
+
+    const saved = saveAppPreferences(preferences);
+
+    if(key === "darkMode"){
+        document.body.classList.toggle(
+            "dark-mode",
+            preferences.darkMode
+        );
+    }
+
+    if(key === "sound"){
+        const status = document.getElementById("settingsSoundStatus");
+
+        if(status){
+            status.textContent = !saved
+                ? "Não foi possível salvar a preferência neste dispositivo."
+                : (preferences.sound
+                    ? "Efeitos sonoros ativados."
+                    : "Efeitos sonoros desativados.");
+        }
+    }
+
+    if(!saved){
+        console.warn("A preferência pode não persistir após fechar o aplicativo.");
+    }
+}
+
+/* Aplicar as preferências salvas ao abrir o aplicativo. */
+applyAppPreferences();
+
+
+/* ============================================================
+MENU LATERAL
+============================================================ */
+
+function openSideMenu(){
+    document.body.classList.add("side-menu-open");
+}
+
+function closeSideMenu(){
+    document.body.classList.remove("side-menu-open");
+}
+
+function toggleSideMenu(){
+    document.body.classList.toggle("side-menu-open");
+}
+
+function updateActiveMenuItem(activeId){
+
+    document
+        .querySelectorAll(".side-menu-item")
+        .forEach(item => {
+
+            item.classList.remove("active");
+
+        });
+
+    const activeItem =
+        document.getElementById(activeId);
+
+    if(activeItem){
+        activeItem.classList.add("active");
+    }
+
+}
+
+function hideAllScreens(){
+
+    const home =
+        document.getElementById("homeScreen");
+
+    const ranking =
+        document.getElementById("rankingScreen");
+
+    const receipts =
+        document.getElementById("receiptsScreen");
+
+    const settings =
+        document.getElementById("settingsScreen");
+
+    if(home){
+        home.style.display = "none";
+    }
+
+    if(ranking){
+        ranking.style.display = "none";
+    }
+
+    if(receipts){
+        receipts.style.display = "none";
+    }
+
+    if(settings){
+        settings.style.display = "none";
+    }
+
+}
+
+function showHomeFromMenu(){
+
+    closeSideMenu();
+
+    hideAllScreens();
+
+    updateActiveMenuItem("navHome");
+
+    const home =
+        document.getElementById("homeScreen");
+
+    if(home){
+
+        home.style.display = "block";
+
+        home.scrollIntoView({
+            behavior:"smooth",
+            block:"start"
+        });
+
+    }
+
+}
+
+function showRankingFromMenu(){
+
+    closeSideMenu();
+
+    hideAllScreens();
+
+    updateActiveMenuItem("navRanking");
+
+    const ranking =
+        document.getElementById("rankingScreen");
+
+    if(ranking){
+        ranking.style.display = "block";
+    }
+
+    loadRanking();
+
+}
+
+function showReceiptsFromMenu(){
+
+    closeSideMenu();
+
+    hideAllScreens();
+
+    updateActiveMenuItem("navReceipts");
+
+    showReceiptsScreen();
+
+}
+
+
+async function showSettingsFromMenu(){
+
+    closeSideMenu();
+    hideAllScreens();
+    updateActiveMenuItem("navSettings");
+
+    const settings = document.getElementById("settingsScreen");
+
+    if(settings){
+        settings.style.display = "block";
+        settings.scrollIntoView({
+            behavior:"smooth",
+            block:"start"
+        });
+    }
+
+    const nameElement = document.getElementById("settingsName");
+    const emailElement = document.getElementById("settingsEmail");
+    const clubElement = document.getElementById("settingsClub");
+
+    if(!currentUser){
+        nameElement.textContent = "Faça login para consultar";
+        emailElement.textContent = "Faça login para consultar";
+        clubElement.textContent = "Faça login para consultar";
+        return;
+    }
+
+    emailElement.textContent = currentUser.email || "Não informado";
+    nameElement.textContent = "Carregando...";
+    clubElement.textContent = "Carregando...";
+
+    await loadCurrentProfile();
+
+    nameElement.textContent =
+        currentProfile && currentProfile.nome_completo
+            ? currentProfile.nome_completo
+            : "Não informado";
+
+    clubElement.textContent =
+        currentProfile && currentProfile.clube
+            ? currentProfile.clube
+            : "Não informado";
+}
+
+
+/* ============================================================
+COMPROVANTES
+============================================================ */
+
+async function showReceiptsScreen(){
+
+    const receipts =
+        document.getElementById(
+            "receiptsScreen"
+        );
+
+    if(receipts){
+        receipts.style.display = "block";
+    }
+
+    document.body.classList.remove(
+        "side-menu-open"
+    );
+
+    const list =
+        document.getElementById(
+            "receiptsList"
+        );
+
+    const detail =
+        document.getElementById(
+            "receiptDetail"
+        );
+
+    if(list){
+        list.style.display = "block";
+    }
+
+    if(detail){
+        detail.style.display = "none";
+    }
+
+    if(!list){
+        return;
+    }
+
+    list.innerHTML = `
+        <div style="background:#fff;border-radius:16px;padding:20px;box-shadow:0 4px 16px rgba(0,0,0,.08);">
+            <p style="margin:0;color:#666;">
+                Carregando seus comprovantes...
+            </p>
+        </div>
+    `;
+
+    if(!currentUser || !currentUser.id){
+
+        list.innerHTML = `
+            <div style="background:#fff;border-radius:16px;padding:20px;">
+                <p style="margin:0;">
+                    Usuário não identificado.
+                </p>
+            </div>
+        `;
+
+        return;
+    }
+
+    const {
+        data,
+        error
+    } =
+        await supabaseClient
+            .from("palpites")
+            .select("rodada,enviado_em")
+            .eq(
+                "user_id",
+                currentUser.id
+            )
+            .not(
+                "enviado_em",
+                "is",
+                null
+            )
+            .order(
+                "rodada",
+                {
+                    ascending:false
+                }
+            );
+
+    if(error){
+
+        console.error(
+            "Erro ao carregar comprovantes:",
+            error
+        );
+
+        list.innerHTML = `
+            <div style="background:#fff;border-radius:16px;padding:20px;">
+                <p style="margin:0;color:#b00020;">
+                    Não foi possível carregar os comprovantes.
+                </p>
+            </div>
+        `;
+
+        return;
+    }
+
+    const rodadas = [];
+    const vistas = new Set();
+
+    (data || []).forEach(item => {
+
+        const rodada =
+            Number(item.rodada);
+
+        if(
+            !rodada ||
+            vistas.has(rodada)
+        ){
+            return;
+        }
+
+        vistas.add(rodada);
+
+        rodadas.push({
+            rodada:rodada,
+            enviado_em:item.enviado_em
+        });
+
+    });
+
+    if(!rodadas.length){
+
+        list.innerHTML = `
+            <div style="background:#fff;border-radius:16px;padding:20px;box-shadow:0 4px 16px rgba(0,0,0,.08);">
+
+                <h2 style="margin-top:0;">
+                    Seus comprovantes
+                </h2>
+
+                <p style="color:#666;margin-bottom:0;">
+                    Você ainda não possui nenhuma rodada enviada.
+                </p>
+
+            </div>
+        `;
+
+        return;
+    }
+
+    list.innerHTML = `
+        <div style="background:#fff;border-radius:16px;padding:20px;box-shadow:0 4px 16px rgba(0,0,0,.08);">
+
+            <h2 style="margin-top:0;">
+                Seus comprovantes
+            </h2>
+
+            <p style="color:#666;">
+                Selecione uma rodada para consultar seus palpites.
+            </p>
+
+            <div id="receiptRounds"></div>
+
+        </div>
+    `;
+
+    const roundsElement =
+        document.getElementById(
+            "receiptRounds"
+        );
+
+    rodadas.forEach(item => {
+
+        const dataEnvio =
+            item.enviado_em
+                ? new Date(
+                    item.enviado_em
+                  ).toLocaleString(
+                    "pt-BR"
+                  )
+                : "";
+
+        const button =
+            document.createElement(
+                "button"
+            );
+
+        button.type = "button";
+
+        button.style.cssText = `
+            width:100%;
+            text-align:left;
+            border:1px solid #e2e5eb;
+            background:#fff;
+            border-radius:12px;
+            padding:16px;
+            margin-top:10px;
+            cursor:pointer;
+            font-size:15px;
+        `;
+
+        button.innerHTML = `
+            <strong>
+                Rodada ${item.rodada}
+            </strong>
+
+            <br>
+
+            <span style="color:#666;font-size:13px;">
+                Enviado em ${dataEnvio}
+            </span>
+        `;
+
+        button.onclick = function(){
+
+            showReceiptDetail(
+                item.rodada
+            );
+
+        };
+
+        if(roundsElement){
+
+            roundsElement.appendChild(
+                button
+            );
+
+        }
+
+    });
+
+}
+
+
+async function showReceiptDetail(rodada){
+
+    try{
+
+        const list =
+            document.getElementById(
+                "receiptsList"
+            );
+
+        const detail =
+            document.getElementById(
+                "receiptDetail"
+            );
+
+        if(list){
+            list.style.display = "none";
+        }
+
+        if(!detail){
+            return;
+        }
+
+        detail.style.display = "block";
+
+        detail.innerHTML = `
+            <div style="background:#fff;border-radius:16px;padding:20px;box-shadow:0 4px 16px rgba(0,0,0,.08);">
+
+                <p style="margin:0;color:#666;">
+                    Carregando comprovante...
+                </p>
+
+            </div>
+        `;
+
+        if(!currentUser || !currentUser.id){
+
+            detail.innerHTML = `
+                <div style="background:#fff;border-radius:16px;padding:20px;">
+
+                    <p>
+                        Usuário não identificado.
+                    </p>
+
+                    <button
+                        type="button"
+                        onclick="showReceiptsScreen()">
+
+                        ← Voltar
+
+                    </button>
+
+                </div>
+            `;
+
+            return;
+        }
+
+        const {
+            data:palpites,
+            error:erroPalpites
+        } =
+            await supabaseClient
+                .from("palpites")
+                .select(`
+                    rodada,
+                    mandante,
+                    visitante,
+                    palpite_mandante,
+                    palpite_visitante,
+                    enviado_em
+                `)
+                .eq(
+                    "user_id",
+                    currentUser.id
+                )
+                .eq(
+                    "rodada",
+                    rodada
+                )
+                .not(
+                    "enviado_em",
+                    "is",
+                    null
+                )
+                .order(
+                    "mandante",
+                    {
+                        ascending:true
+                    }
+                );
+
+        if(erroPalpites){
+
+            console.error(
+                "Erro ao carregar palpites do comprovante:",
+                erroPalpites
+            );
+
+            detail.innerHTML = `
+                <div style="background:#fff;border-radius:16px;padding:20px;">
+
+                    <button
+                        type="button"
+                        onclick="showReceiptsScreen()"
+                        style="border:0;background:#254aa5;color:#fff;border-radius:10px;padding:9px 14px;cursor:pointer;margin-bottom:18px;">
+
+                        ← Voltar
+
+                    </button>
+
+                    <p style="color:#b00020;">
+                        Não foi possível carregar os palpites desta rodada.
+                    </p>
+
+                </div>
+            `;
+
+            return;
+        }
+
+        if(
+            !palpites ||
+            !palpites.length
+        ){
+
+            detail.innerHTML = `
+                <div style="background:#fff;border-radius:16px;padding:20px;">
+
+                    <button
+                        type="button"
+                        onclick="showReceiptsScreen()"
+                        style="border:0;background:#254aa5;color:#fff;border-radius:10px;padding:9px 14px;cursor:pointer;margin-bottom:18px;">
+
+                        ← Voltar
+
+                    </button>
+
+                    <h2 style="margin-top:0;">
+                        Comprovante da Rodada ${rodada}
+                    </h2>
+
+                    <p style="color:#666;">
+                        Nenhum palpite enviado foi encontrado para esta rodada.
+                    </p>
+
+                </div>
+            `;
+
+            return;
+        }
+
+        const {
+            data:jogos,
+            error:erroJogos
+        } =
+            await supabaseClient
+                .from("calendario_brasileirao")
+                .select(`
+                    ref_cbf,
+                    rodada,
+                    mandante,
+                    visitante,
+                    data_prevista,
+                    hora_prevista,
+                    status,
+                    resultado_mandante,
+                    resultado_visitante
+                `)
+                .eq(
+                    "temporada",
+                    TEMPORADA_ATUAL
+                )
+                .eq(
+                    "rodada",
+                    rodada
+                )
+                .order(
+                    "data_prevista",
+                    {
+                        ascending:true,
+                        nullsFirst:false
+                    }
+                )
+                .order(
+                    "hora_prevista",
+                    {
+                        ascending:true,
+                        nullsFirst:false
+                    }
+                )
+                .order(
+                    "ref_cbf",
+                    {
+                        ascending:true
+                    }
+                );
+
+        if(erroJogos){
+
+            console.error(
+                "Erro ao carregar jogos do comprovante:",
+                erroJogos
+            );
+
+            detail.innerHTML = `
+                <div style="background:#fff;border-radius:16px;padding:20px;">
+
+                    <button
+                        type="button"
+                        onclick="showReceiptsScreen()"
+                        style="border:0;background:#254aa5;color:#fff;border-radius:10px;padding:9px 14px;cursor:pointer;margin-bottom:18px;">
+
+                        ← Voltar
+
+                    </button>
+
+                    <p style="color:#b00020;">
+                        Não foi possível carregar os jogos desta rodada.
+                    </p>
+
+                </div>
+            `;
+
+            return;
+        }
+
+        function encontrarJogo(palpite){
+
+            return (
+                jogos || []
+            ).find(jogo =>
+
+                normalizarTime(
+                    jogo.mandante
+                ) ===
+                normalizarTime(
+                    palpite.mandante
+                )
+
+                &&
+
+                normalizarTime(
+                    jogo.visitante
+                ) ===
+                normalizarTime(
+                    palpite.visitante
+                )
+
+            );
+
+        }
+
+        const primeiroEnvio =
+            palpites.find(
+                item => item.enviado_em
+            );
+
+        const dataEnvio =
+            primeiroEnvio &&
+            primeiroEnvio.enviado_em
+                ? new Date(
+                    primeiroEnvio.enviado_em
+                  ).toLocaleString(
+                    "pt-BR"
+                  )
+                : "";
+
+        let jogosHtml = "";
+
+        palpites.forEach(
+            palpite => {
+
+                const jogo =
+                    encontrarJogo(
+                        palpite
+                    );
+
+                const placarReal =
+                    jogo &&
+                    jogo.resultado_mandante !== null &&
+                    jogo.resultado_mandante !== undefined &&
+                    jogo.resultado_visitante !== null &&
+                    jogo.resultado_visitante !== undefined
+
+                    ? `${jogo.resultado_mandante} x ${jogo.resultado_visitante}`
+
+                    : "Ainda não realizado";
+
+                const dataJogo =
+                    jogo &&
+                    jogo.data_prevista
+                        ? formatarDataJogo(
+                            jogo.data_prevista
+                          )
+                        : "";
+
+                const horaJogo =
+                    jogo &&
+                    jogo.hora_prevista
+                        ? String(
+                            jogo.hora_prevista
+                          ).slice(0,5)
+                        : "";
+
+                jogosHtml += `
+
+                    <div style="
+                        border:1px solid #e2e5eb;
+                        border-radius:14px;
+                        padding:16px;
+                        margin-top:12px;
+                        background:#fff;
+                    ">
+
+                        <div style="
+                            font-weight:700;
+                            font-size:15px;
+                            margin-bottom:12px;
+                        ">
+
+                            ${palpite.mandante}
+
+                            <span style="
+                                font-weight:400;
+                                color:#777;
+                            ">
+                                x
+                            </span>
+
+                            ${palpite.visitante}
+
+                        </div>
+
+                        <div style="
+                            display:flex;
+                            justify-content:space-between;
+                            gap:12px;
+                            flex-wrap:wrap;
+                        ">
+
+                            <div>
+
+                                <div style="
+                                    font-size:12px;
+                                    color:#777;
+                                    margin-bottom:4px;
+                                ">
+                                    SEU PALPITE
+                                </div>
+
+                                <strong style="font-size:20px;">
+
+                                    ${palpite.palpite_mandante}
+                                    x
+                                    ${palpite.palpite_visitante}
+
+                                </strong>
+
+                            </div>
+
+                            <div style="text-align:right;">
+
+                                <div style="
+                                    font-size:12px;
+                                    color:#777;
+                                    margin-bottom:4px;
+                                ">
+                                    PLACAR
+                                </div>
+
+                                <strong style="font-size:20px;">
+
+                                    ${placarReal}
+
+                                </strong>
+
+                            </div>
+
+                        </div>
+
+                        ${
+                            dataJogo
+                                ? `
+                                    <div style="
+                                        margin-top:10px;
+                                        font-size:12px;
+                                        color:#777;
+                                    ">
+                                        ${dataJogo}
+                                        ${
+                                            horaJogo
+                                                ? " · " + horaJogo
+                                                : ""
+                                        }
+                                    </div>
+                                  `
+                                : ""
+                        }
+
+                    </div>
+
+                `;
+
+            }
+        );
+
+        detail.innerHTML = `
+
+            <div style="
+                background:#fff;
+                border-radius:16px;
+                padding:20px;
+                box-shadow:0 4px 16px rgba(0,0,0,.08);
+            ">
+
+                <button
+                    type="button"
+                    onclick="showReceiptsScreen()"
+                    style="
+                        border:0;
+                        background:#254aa5;
+                        color:#fff;
+                        border-radius:10px;
+                        padding:9px 14px;
+                        cursor:pointer;
+                        margin-bottom:18px;
+                    ">
+
+                    ← Voltar
+
+                </button>
+
+                <div style="margin-bottom:18px;">
+
+                    <div
+                        class="eyebrow"
+                        style="color:#254aa5;">
+
+                        COMPROVANTE
+
+                    </div>
+
+                    <h2 style="margin:4px 0 6px;">
+                        Rodada ${rodada}
+                    </h2>
+
+                    <p style="
+                        margin:0;
+                        color:#666;
+                        font-size:13px;
+                    ">
+
+                        Enviado em ${dataEnvio}
+
+                    </p>
+
+                </div>
+
+                <div>
+                    ${jogosHtml}
+                </div>
+
+            </div>
+
+        `;
+
+    }catch(error){
+
+        console.error(
+            "Erro ao abrir comprovante:",
+            error
+        );
+
+        const detail =
+            document.getElementById(
+                "receiptDetail"
+            );
+
+        if(detail){
+
+            detail.innerHTML = `
+
+                <div style="
+                    background:#fff;
+                    border-radius:16px;
+                    padding:20px;
+                ">
+
+                    <button
+                        type="button"
+                        onclick="showReceiptsScreen()"
+                        style="
+                            border:0;
+                            background:#254aa5;
+                            color:#fff;
+                            border-radius:10px;
+                            padding:9px 14px;
+                            cursor:pointer;
+                            margin-bottom:18px;
+                        ">
+
+                        ← Voltar
+
+                    </button>
+
+                    <h2 style="margin-top:0;">
+                        Erro ao carregar comprovante
+                    </h2>
+
+                    <p style="color:#b00020;">
+
+                        ${
+                            error &&
+                            error.message
+                                ? error.message
+                                : String(error)
+                        }
+
+                    </p>
+
+                </div>
+
+            `;
+
+        }
+
+    }
+
+}
+
+function showHomeFromReceipts(){
+    showHomeFromMenu();
+}
+
+function logoutFromMenu(){
+    closeSideMenu();
+    logoutUser();
+}
+
+
+/* ============================================================
+SUPABASE
+============================================================ */
+
+const SUPABASE_URL =
+    "https://molcumgrqhmefzdrkrsb.supabase.co";
+
+const SUPABASE_PUBLISHABLE_KEY =
+    "sb_publishable_QJ1lvq5gMu7zhfM3Efe4XQ_E1mpI85P";
+
+const supabaseClient =
+    window.supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_PUBLISHABLE_KEY,
+        {
+            auth:{
+                flowType:"implicit",
+                autoRefreshToken:true,
+                persistSession:true,
+                detectSessionInUrl:false
+            }
+        }
+    );
+
+
+/* ============================================================
+TEMPORADA
+============================================================ */
+
+const TEMPORADA_ATUAL = 2026;
+
+let RODADA_ATUAL = null;
+
+
+/* ============================================================
+GOOGLE
+============================================================ */
+
+const GOOGLE_REDIRECT_URI = "brasileirao://login-callback";
+
+function getAuthRedirectUri() {
+    if (
+        window.AndroidDB &&
+        typeof window.AndroidDB.openExternalAuthUrl === "function"
+    ) {
+        return GOOGLE_REDIRECT_URI;
+    }
+
+    if (
+        window.location.protocol === "https:" ||
+        window.location.protocol === "http:"
+    ) {
+        return window.location.origin;
+    }
+
+    return "https://brasileirao-da-depressao.pages.dev";
+}
+
+
+/* ============================================================
+ESTADO
+============================================================ */
+
+let currentUser = null;
+let currentProfile = null;
+
+let m = [];
+
+let predictionSaveTimers = {};
+
+let countdownSeconds = 0;
+let countdownInterval = null;
+let countdownDeadline = null;
+
+let isSendingPredictions = false;
+
+let authenticationFlowRunning = false;
+
+let roundLockedByTime = false;
+
+
+/* ============================================================
+ELEMENTOS
+============================================================ */
+
+const gamesElement =
+    document.querySelector("#games");
+
+
+/* ============================================================
+AUXILIARES
+============================================================ */
+
+function setStatus(message){
+
+    const element =
+        document.getElementById("status");
+
+    if(element){
+        element.textContent = message;
+    }
+
+}
+
+function setLoginError(message){
+
+    const element =
+        document.getElementById("loginError");
+
+    if(element){
+        element.textContent = message;
+    }
+
+}
+
+function setRegisterError(message){
+
+    const element =
+        document.getElementById("registerError");
+
+    if(element){
+        element.textContent = message;
+    }
+
+}
+
+function setRegisterSuccess(message){
+
+    const element =
+        document.getElementById("registerSuccess");
+
+    if(element){
+        element.textContent = message;
+    }
+
+}
+
+
+/* ============================================================
+RESTAURAR RODAPÉ DE PALPITES
+============================================================ */
+
+function restorePredictionFooter(){
+
+    const footer =
+        document.getElementById(
+            "predictionFooter"
+        );
+
+    if(!footer){
+        return;
+    }
+
+    footer.innerHTML = `
+
+        <div
+            id="predictionCounter"
+            class="prediction-counter">
+
+            0 de 0 palpites preenchidos
+
+        </div>
+
+        <button
+            id="sendPredictionsButton"
+            class="send-button"
+            type="button"
+            onclick="sendPredictions()"
+            disabled>
+
+            ENVIAR PALPITES
+
+        </button>
+
+        <p
+            id="sendPredictionsMessage"
+            class="send-message">
+        </p>
+
+        <div
+            id="sendConfirmation"
+            class="send-confirmation">
+
+            <p class="send-confirmation-title">
+                Confirmar envio dos palpites?
+            </p>
+
+            <p class="send-confirmation-text">
+                Depois de confirmar, os palpites desta rodada não poderão mais ser alterados.
+            </p>
+
+            <div class="send-confirmation-actions">
+
+                <button
+                    type="button"
+                    id="cancelSendButton"
+                    class="send-confirm-cancel">
+
+                    CANCELAR
+
+                </button>
+
+                <button
+                    type="button"
+                    id="confirmSendButton"
+                    class="send-confirm-ok">
+
+                    CONFIRMAR ENVIO
+
+                </button>
+
+            </div>
+
+        </div>
+
+    `;
+
+    const cancelBtn =
+        document.getElementById(
+            "cancelSendButton"
+        );
+
+    const confirmBtn =
+        document.getElementById(
+            "confirmSendButton"
+        );
+
+    if(cancelBtn){
+
+        cancelBtn.addEventListener(
+            "click",
+            function(){
+
+                const confirmation =
+                    document.getElementById(
+                        "sendConfirmation"
+                    );
+
+                if(confirmation){
+                    confirmation.classList.remove(
+                        "show"
+                    );
+                }
+
+            }
+        );
+
+    }
+
+    if(confirmBtn){
+
+        confirmBtn.addEventListener(
+            "click",
+            confirmSendPredictions
+        );
+
+    }
+
+}
+
+
+/* ============================================================
+LOGIN CENTRAL
+============================================================ */
+
+/* ============================================================
+FCM ANDROID — RECEBIMENTO DO TOKEN
+O registro no backend será conectado na próxima etapa.
+============================================================ */
+
+window.pendingFcmTokenForRegistration = null;
+
+window.handleFcmTokenResult = function(token) {
+    if (typeof token !== "string" || !token.trim()) {
+        console.warn("FCM: não foi possível obter o token do dispositivo.");
+        return;
+    }
+
+    // Mantido somente em memória; ainda não é enviado ao Supabase.
+    window.pendingFcmTokenForRegistration = token;
+
+    console.info("FCM: token do dispositivo recebido.");
+};
+
+function requestAndroidFcmToken() {
+    if (
+        !window.AndroidDB ||
+        typeof window.AndroidDB.requestFcmToken !== "function"
+    ) {
+        return;
+    }
+
+    try {
+        window.AndroidDB.requestFcmToken("handleFcmTokenResult");
+    } catch (error) {
+        console.warn("FCM: falha ao solicitar token do Android.", error);
+    }
+}
+async function finishAuthenticatedLogin(){
+
+    if(!currentUser){
+        return false;
+    }
+
+    if(authenticationFlowRunning){
+        return false;
+    }
+
+    authenticationFlowRunning = true;
+
+    try{
+
+        restorePredictionFooter();
+
+        await loadCurrentProfile();
+
+        if(!currentProfile){
+
+            console.warn(
+                "Perfil não encontrado. Tentando criar perfil."
+            );
+
+            const now =
+                new Date().toISOString();
+
+            const {
+                data,
+                error
+            } =
+                await supabaseClient
+                    .from("profiles")
+                    .insert({
+                        id:currentUser.id,
+                        email:
+                            currentUser.email || "",
+                        clube:null,
+                        created_at:now,
+                        updated_at:now
+                    })
+                    .select("*")
+                    .maybeSingle();
+
+            if(error){
+
+                console.warn(
+                    "Não foi possível criar perfil diretamente:",
+                    error
+                );
+
+                await loadCurrentProfile();
+
+            }else{
+
+                currentProfile =
+                    data || null;
+
+            }
+
+        }
+
+        if(
+            !currentProfile ||
+            !currentProfile.nome_completo ||
+            !String(currentProfile.nome_completo).trim() ||
+            !currentProfile.clube ||
+            !String(currentProfile.clube).trim()
+        ){
+
+            showRequiredClubScreen();
+
+            return false;
+
+        }
+
+        hideRequiredClubScreen();
+
+        // Solicita o token somente após validar o perfil do usuário.
+        requestAndroidFcmToken();
+
+        document
+            .getElementById(
+                "loginScreen"
+            )
+            .style.display = "none";
+
+        document.body.classList.add(
+            "app-authenticated"
+        );
+
+        setStatus(
+            "✓ Login realizado"
+        );
+
+        await loadOpenRound();
+
+        await loadCalendar();
+
+        await loadUserPredictions();
+
+        await loadStatistics();
+
+        await loadRanking();
+
+        return true;
+
+    }catch(error){
+
+        console.error(
+            "Erro ao finalizar autenticação:",
+            error
+        );
+
+        setLoginError(
+            "Não foi possível carregar seu perfil."
+        );
+
+        return false;
+
+    }finally{
+
+        authenticationFlowRunning = false;
+
+    }
+
+}
+
+
+/* ============================================================
+TIME OBRIGATÓRIO
+============================================================ */
+
+function showRequiredClubScreen(){
+
+    const loginScreen =
+        document.getElementById(
+            "loginScreen"
+        );
+
+    const screen =
+        document.getElementById(
+            "clubRequiredScreen"
+        );
+
+    const email =
+        document.getElementById(
+            "clubRequiredEmail"
+        );
+
+    const nameInput =
+        document.getElementById(
+            "requiredFullName"
+        );
+
+    const select =
+        document.getElementById(
+            "requiredClub"
+        );
+
+    const button =
+        document.getElementById(
+            "saveRequiredClubButton"
+        );
+
+    const error =
+        document.getElementById(
+            "clubRequiredError"
+        );
+
+    if(loginScreen){
+        loginScreen.style.display = "none";
+    }
+
+    if(screen){
+        screen.style.display = "flex";
+    }
+
+    if(email){
+
+        email.textContent =
+            currentUser &&
+            currentUser.email
+                ? currentUser.email
+                : "";
+
+    }
+
+    if(error){
+        error.textContent = "";
+    }
+
+    if(nameInput){
+
+        nameInput.value =
+            currentProfile &&
+            currentProfile.nome_completo
+                ? currentProfile.nome_completo
+                : "";
+
+    }
+
+    if(
+        select &&
+        currentProfile &&
+        currentProfile.clube
+    ){
+
+        select.value =
+            currentProfile.clube;
+
+    }else if(select){
+
+        select.value = "";
+
+    }
+
+    if(button){
+
+        const nome =
+            nameInput
+                ? nameInput.value.trim().replace(/\s+/g, " ")
+                : "";
+
+        button.disabled =
+            nome.split(/\s+/).filter(Boolean).length < 2 ||
+            !select ||
+            !select.value;
+
+    }
+
+}
+
+function hideRequiredClubScreen(){
+
+    const screen =
+        document.getElementById(
+            "clubRequiredScreen"
+        );
+
+    if(screen){
+        screen.style.display = "none";
+    }
+
+}
+
+
+/* ============================================================
+SALVAR TIME
+============================================================ */
+
+async function saveRequiredClub(){
+
+    if(!currentUser){
+        return;
+    }
+
+    const nameInput =
+        document.getElementById(
+            "requiredFullName"
+        );
+
+    const select =
+        document.getElementById(
+            "requiredClub"
+        );
+
+    const button =
+        document.getElementById(
+            "saveRequiredClubButton"
+        );
+
+    const errorElement =
+        document.getElementById(
+            "clubRequiredError"
+        );
+
+    if(!select){
+        return;
+    }
+
+    const fullName =
+        nameInput
+            ? nameInput.value.trim().replace(/\s+/g, " ")
+            : "";
+
+    const club =
+        select.value;
+
+    if(fullName.split(/\s+/).filter(Boolean).length < 2){
+
+        if(errorElement){
+            errorElement.textContent =
+                "Informe seu nome e sobrenome para continuar.";
+        }
+
+        return;
+    }
+
+    if(!club){
+
+        if(errorElement){
+
+            errorElement.textContent =
+                "Escolha seu time do coração para continuar.";
+
+        }
+
+        return;
+    }
+
+    if(button){
+
+        button.disabled = true;
+
+        button.textContent =
+            "SALVANDO...";
+
+    }
+
+    if(errorElement){
+        errorElement.textContent = "";
+    }
+
+    try{
+
+        const {
+            data,
+            error
+        } =
+            await supabaseClient
+                .from("profiles")
+                .update({
+                    nome_completo:fullName,
+                    clube:club,
+                    updated_at:
+                        new Date().toISOString()
+                })
+                .eq(
+                    "id",
+                    currentUser.id
+                )
+                .select("*")
+                .maybeSingle();
+
+        if(error){
+
+            console.error(
+                "Erro ao salvar clube:",
+                error
+            );
+
+            if(errorElement){
+
+                const mensagem =
+                    error.message || "";
+
+                if(
+                    mensagem.toLowerCase().includes("termos não permitidos")
+                ){
+
+                    errorElement.textContent =
+                        "O nome informado contém termos não permitidos.";
+
+                }else if(
+                    mensagem.toLowerCase().includes("nome e sobrenome")
+                ){
+
+                    errorElement.textContent =
+                        "Informe seu nome e sobrenome.";
+
+                }else{
+
+                    errorElement.textContent =
+                        "Não foi possível salvar seu perfil. Tente novamente.";
+
+                }
+
+            }
+
+            return;
+        }
+
+        if(data){
+
+            currentProfile =
+                data;
+
+        }else{
+
+            await loadCurrentProfile();
+
+        }
+
+        if(
+            !currentProfile ||
+            !currentProfile.nome_completo ||
+            !String(currentProfile.nome_completo).trim() ||
+            !currentProfile.clube
+        ){
+
+            if(errorElement){
+
+                errorElement.textContent =
+                    "O perfil não foi registrado completamente. Confira seu nome e time.";
+
+            }
+
+            return;
+
+        }
+
+        hideRequiredClubScreen();
+
+        // Solicita o token somente após validar o perfil do usuário.
+        requestAndroidFcmToken();
+
+        document
+            .getElementById(
+                "loginScreen"
+            )
+            .style.display = "none";
+
+        document.body.classList.add(
+            "app-authenticated"
+        );
+
+        setStatus(
+            "✓ Perfil salvo: " +
+            currentProfile.nome_completo
+        );
+
+        await loadOpenRound();
+
+        await loadCalendar();
+
+        await loadUserPredictions();
+
+        await loadStatistics();
+
+        await loadRanking();
+
+    }catch(error){
+
+        console.error(
+            "Erro inesperado ao salvar clube:",
+            error
+        );
+
+        if(errorElement){
+
+            errorElement.textContent =
+                "Erro de conexão ao salvar seu time.";
+
+        }
+
+    }finally{
+
+        if(button){
+
+            button.textContent =
+                "CONTINUAR";
+
+        }
+
+        if(typeof updateRequiredProfileButton === "function"){
+            updateRequiredProfileButton();
+        }
+
+    }
+
+}
+
+
+/* ============================================================
+EVENTO TIME
+============================================================ */
+
+const requiredClubElement =
+    document.getElementById(
+        "requiredClub"
+    );
+
+const requiredFullNameElement =
+    document.getElementById(
+        "requiredFullName"
+    );
+
+function updateRequiredProfileButton(){
+
+    const button =
+        document.getElementById(
+            "saveRequiredClubButton"
+        );
+
+    const errorElement =
+        document.getElementById(
+            "clubRequiredError"
+        );
+
+    const fullName =
+        requiredFullNameElement
+            ? requiredFullNameElement.value.trim().replace(/\s+/g, " ")
+            : "";
+
+    const nameParts =
+        fullName.split(/\s+/).filter(Boolean);
+
+    const hasNameAndSurname =
+        nameParts.length >= 2;
+
+    const hasClub =
+        requiredClubElement &&
+        Boolean(requiredClubElement.value);
+
+    if(button){
+        button.disabled = !(hasNameAndSurname && hasClub);
+    }
+
+    if(errorElement){
+        errorElement.textContent = "";
+    }
+
+}
+
+if(requiredClubElement){
+
+    requiredClubElement.addEventListener(
+        "change",
+        updateRequiredProfileButton
+    );
+
+}
+
+if(requiredFullNameElement){
+
+    requiredFullNameElement.addEventListener(
+        "input",
+        updateRequiredProfileButton
+    );
+
+}
+
+
+/* ============================================================
+GOOGLE CALLBACK
+============================================================ */
+
+window.handleGoogleCallback =
+async function(callbackUrl){
+
+
+    if(!callbackUrl){
+
+        setLoginError(
+            "Retorno do Google não recebido."
+        );
+
+        return;
+
+    }
+
+    try{
+
+        const url =
+            new URL(callbackUrl);
+
+        const hashParams =
+            new URLSearchParams(
+                url.hash
+                    ? url.hash.substring(1)
+                    : ""
+            );
+
+        const callbackType =
+            hashParams.get("type") ||
+            url.searchParams.get("type") ||
+            "";
+
+        const isEmailConfirmation =
+            callbackType === "signup" ||
+            callbackType === "email";
+
+        console.log(
+            "Tipo de retorno de autenticação:",
+            callbackType || "não informado"
+        );
+
+        const errorDescription =
+            hashParams.get(
+                "error_description"
+            ) ||
+            url.searchParams.get(
+                "error_description"
+            );
+
+        const errorCode =
+            hashParams.get("error") ||
+            url.searchParams.get("error");
+
+        if(errorDescription || errorCode){
+
+            console.error(
+                "Erro retornado pelo OAuth:",
+                errorCode,
+                errorDescription
+            );
+
+            let message =
+                errorDescription ||
+                errorCode ||
+                (
+                    isEmailConfirmation
+                        ? "Não foi possível confirmar o e-mail."
+                        : "A autenticação foi recusada."
+                );
+
+            try{
+
+                message =
+                    decodeURIComponent(
+                        message
+                    );
+
+            }catch(_){}
+
+            setLoginError(
+                message
+            );
+
+            return;
+
+        }
+
+        const accessToken =
+            hashParams.get(
+                "access_token"
+            ) ||
+            url.searchParams.get(
+                "access_token"
+            );
+
+        const refreshToken =
+            hashParams.get(
+                "refresh_token"
+            ) ||
+            url.searchParams.get(
+                "refresh_token"
+            );
+
+        if(
+            accessToken &&
+            refreshToken
+        ){
+
+            console.log(
+                "Tokens de autenticação recebidos."
+            );
+
+            const {
+                data,
+                error
+            } =
+                await supabaseClient.auth.setSession({
+                    access_token:
+                        accessToken,
+
+                    refresh_token:
+                        refreshToken
+                });
+
+            if(error){
+
+                console.error(
+                    "ERRO AO CRIAR SESSÃO:",
+                    error
+                );
+
+                setLoginError(
+                    error.message ||
+                    "Não foi possível criar a sessão."
+                );
+
+                return;
+
+            }
+
+            if(
+                !data ||
+                !data.user
+            ){
+
+                setLoginError(
+                    "A autenticação foi recebida, mas a sessão não foi criada."
+                );
+
+                return;
+
+            }
+
+            currentUser =
+                data.user;
+
+            if(callbackType === "recovery"){
+                showNewPasswordForm();
+                return;
+            }
+
+            await finishAuthenticatedLogin();
+
+            return;
+
+        }
+
+        const code =
+            url.searchParams.get(
+                "code"
+            ) ||
+            hashParams.get(
+                "code"
+            );
+
+        if(code){
+
+            const {
+                data,
+                error
+            } =
+                await supabaseClient.auth
+                    .exchangeCodeForSession(
+                        code
+                    );
+
+            if(error){
+
+                console.error(
+                    "ERRO AO TROCAR CÓDIGO POR SESSÃO:",
+                    error
+                );
+
+                setLoginError(
+                    error.message ||
+                    "Não foi possível concluir a autenticação."
+                );
+
+                return;
+
+            }
+
+            if(
+                !data ||
+                !data.user
+            ){
+
+                setLoginError(
+                    "A autenticação foi concluída, mas o usuário não foi encontrado."
+                );
+
+                return;
+
+            }
+
+            currentUser =
+                data.user;
+
+            if(callbackType === "recovery"){
+                showNewPasswordForm();
+                return;
+            }
+
+            await finishAuthenticatedLogin();
+
+            return;
+
+        }
+
+        setLoginError(
+            "O retorno da autenticação não pôde ser concluído."
+        );
+
+    }catch(error){
+
+        console.error(
+            "ERRO AO PROCESSAR CALLBACK DE AUTENTICAÇÃO:",
+            error
+        );
+
+        setLoginError(
+            error &&
+            error.message
+                ? error.message
+                : "Erro ao finalizar a autenticação."
+        );
+
+    }
+
+};
+
+
+/* ============================================================
+INTERFACE DA RODADA
+============================================================ */
+
+function updateRoundUI(){
+
+    const eyebrow =
+        document.getElementById(
+            "roundEyebrow"
+        );
+
+    const hero =
+        document.getElementById(
+            "heroSection"
+        );
+
+    const roundDate =
+        document.getElementById(
+            "roundDate"
+        );
+
+    if(!RODADA_ATUAL){
+
+        if(eyebrow){
+
+            eyebrow.textContent =
+                "CAMPEONATO BRASILEIRO · NENHUMA RODADA ABERTA";
+
+        }
+
+        if(hero){
+
+            hero.setAttribute(
+                "data-round",
+                ""
+            );
+
+        }
+
+        if(roundDate){
+
+            roundDate.textContent =
+                "Aguarde a abertura da próxima rodada.";
+
+        }
+
+        return;
+    }
+
+    if(eyebrow){
+
+        eyebrow.textContent =
+            "CAMPEONATO BRASILEIRO · RODADA " +
+            RODADA_ATUAL;
+
+    }
+
+    if(hero){
+
+        hero.setAttribute(
+            "data-round",
+            RODADA_ATUAL
+        );
+
+    }
+
+    if(roundDate){
+
+        roundDate.textContent =
+            "Rodada " +
+            RODADA_ATUAL +
+            " aberta para palpites.";
+
+    }
+
+}
+
+
+/* ============================================================
+RODADA ABERTA
+============================================================ */
+
+async function loadOpenRound(){
+
+    try{
+
+        const {
+            data,
+            error
+        } =
+            await supabaseClient
+                .from("calendario_brasileirao")
+                .select("rodada")
+                .eq(
+                    "temporada",
+                    TEMPORADA_ATUAL
+                )
+                .eq(
+                    "aberta_para_palpite",
+                    true
+                )
+                .order(
+                    "rodada",
+                    {
+                        ascending:true
+                    }
+                )
+                .limit(1);
+
+        if(error){
+
+            console.error(
+                "Erro ao verificar rodada aberta:",
+                error
+            );
+
+            RODADA_ATUAL = null;
+
+            updateRoundUI();
+
+            return false;
+        }
+
+        if(
+            !data ||
+            data.length === 0
+        ){
+
+            RODADA_ATUAL = null;
+
+            updateRoundUI();
+
+            return false;
+        }
+
+        RODADA_ATUAL =
+            data[0].rodada;
+
+        updateRoundUI();
+
+        return true;
+
+    }catch(error){
+
+        console.error(
+            "Erro inesperado ao buscar rodada aberta:",
+            error
+        );
+
+        RODADA_ATUAL = null;
+
+        updateRoundUI();
+
+        return false;
+
+    }
+
+}
+
+
+/* ============================================================
+NORMALIZAÇÃO
+============================================================ */
+
+function normalizarTime(nome){
+
+    if(!nome){
+        return "";
+    }
+
+    return nome
+        .normalize("NFD")
+        .replace(
+            /[\u0300-\u036f]/g,
+            ""
+        )
+        .toLowerCase()
+        .trim();
+
+}
+
+
+/* ============================================================
+DATA
+============================================================ */
+
+function formatarDataJogo(data){
+
+    if(!data){
+        return "Data não definida";
+    }
+
+    const dataObj =
+        new Date(
+            data + "T12:00:00"
+        );
+
+    if(
+        Number.isNaN(
+            dataObj.getTime()
+        )
+    ){
+
+        return data;
+
+    }
+
+    return dataObj.toLocaleDateString(
+        "pt-BR",
+        {
+            weekday:"short",
+            day:"2-digit",
+            month:"2-digit"
+        }
+    );
+
+}
+
+
+/* ============================================================
+LOGIN / CADASTRO
+============================================================ */
+
+function hideAuthenticationForms(){
+
+    [
+        "loginForm",
+        "registerForm",
+        "passwordRecoveryForm",
+        "newPasswordForm"
+    ].forEach(function(id){
+
+        const element = document.getElementById(id);
+
+        if(element){
+            element.style.display = "none";
+        }
+
+    });
+
+}
+
+function showLogin(){
+
+    hideAuthenticationForms();
+
+    document.getElementById("loginForm").style.display = "block";
+
+    setRegisterError("");
+    setRegisterSuccess("");
+    setLoginError("");
+
+}
+
+function showRegister(){
+
+    hideAuthenticationForms();
+
+    document.getElementById("registerForm").style.display = "block";
+
+    setRegisterError("");
+    setRegisterSuccess("");
+
+}
+
+function showForgotPassword(){
+
+    hideAuthenticationForms();
+
+    document.getElementById("passwordRecoveryForm").style.display = "block";
+
+    const loginEmail = document.getElementById("loginEmail").value.trim();
+    document.getElementById("recoveryEmail").value = loginEmail;
+
+    document.getElementById("passwordRecoveryError").textContent = "";
+    document.getElementById("passwordRecoverySuccess").textContent = "";
+    document.getElementById("passwordRecoverySuccess").style.display = "none";
+
+}
+
+function showNewPasswordForm(){
+
+    hideAuthenticationForms();
+
+    document.getElementById("newPasswordForm").style.display = "block";
+    document.getElementById("newPasswordFields").style.display = "block";
+
+    document.getElementById("newPassword").value = "";
+    document.getElementById("confirmNewPassword").value = "";
+
+    document.getElementById("newPasswordError").textContent = "";
+    document.getElementById("newPasswordSuccess").textContent = "";
+    document.getElementById("newPasswordSuccess").style.display = "none";
+    document.getElementById("newPasswordDoneButton").style.display = "none";
+
+}
+
+async function sendPasswordRecovery(){
+
+    const email = document.getElementById("recoveryEmail").value.trim();
+    const button = document.getElementById("sendRecoveryButton");
+    const errorElement = document.getElementById("passwordRecoveryError");
+    const successElement = document.getElementById("passwordRecoverySuccess");
+
+    errorElement.textContent = "";
+    successElement.textContent = "";
+    successElement.style.display = "none";
+
+    if(!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
+        errorElement.textContent = "Informe um e-mail válido.";
+        return;
+    }
+
+    button.disabled = true;
+    button.textContent = "Enviando...";
+
+    try{
+
+        const { error } = await supabaseClient.auth.resetPasswordForEmail(
+            email,
+            {
+                redirectTo: getAuthRedirectUri()
+            }
+        );
+
+        if(error){
+            console.error("Erro ao solicitar recuperação de senha:", error);
+            errorElement.textContent = "Não foi possível solicitar a recuperação. Confira a conexão e tente novamente.";
+            return;
+        }
+
+        successElement.textContent =
+            "Se o e-mail estiver cadastrado, você receberá um link para redefinir sua senha.";
+
+        successElement.style.display = "block";
+
+    }catch(error){
+
+        console.error("Erro na recuperação de senha:", error);
+        errorElement.textContent = "Não foi possível solicitar a recuperação. Tente novamente.";
+
+    }finally{
+
+        button.disabled = false;
+        button.textContent = "Enviar link de recuperação";
+
+    }
+
+}
+
+async function saveNewPassword(){
+
+    const password = document.getElementById("newPassword").value;
+    const confirmation = document.getElementById("confirmNewPassword").value;
+    const button = document.getElementById("saveNewPasswordButton");
+    const errorElement = document.getElementById("newPasswordError");
+
+    errorElement.textContent = "";
+
+    if(password.length < 6){
+        errorElement.textContent = "A senha deve ter pelo menos 6 caracteres.";
+        return;
+    }
+
+    if(password !== confirmation){
+        errorElement.textContent = "As senhas não coincidem.";
+        return;
+    }
+
+    button.disabled = true;
+    button.textContent = "Salvando...";
+
+    try{
+
+        const { error } = await supabaseClient.auth.updateUser({
+            password: password
+        });
+
+        if(error){
+            console.error("Erro ao atualizar senha:", error);
+            const detalheErro = String(error.message || error.code || "").toLowerCase();
+
+            if (
+                detalheErro.includes("different from the old password") ||
+                detalheErro.includes("same password") ||
+                detalheErro.includes("same as the old password") ||
+                detalheErro.includes("password reuse") ||
+                detalheErro.includes("previous password") ||
+                detalheErro.includes("already been used")
+            ) {
+                errorElement.textContent =
+                    "A nova senha deve ser diferente da senha anterior. Escolha outra senha.";
+            } else {
+                errorElement.textContent = error.message
+                    ? "Não foi possível alterar a senha: " + error.message
+                    : "Não foi possível alterar a senha. Tente novamente.";
+            }
+            return;
+        }
+
+        await supabaseClient.auth.signOut();
+        currentUser = null;
+
+        document.getElementById("newPasswordFields").style.display = "none";
+
+        const successElement = document.getElementById("newPasswordSuccess");
+        successElement.textContent = "Senha alterada com sucesso. Agora você pode entrar com sua nova senha.";
+        successElement.style.display = "block";
+
+        document.getElementById("newPasswordDoneButton").style.display = "block";
+
+    }catch(error){
+
+        console.error("Erro ao salvar nova senha:", error);
+        const detalheErro = String(error.message || error.code || "").toLowerCase();
+
+        if (
+            detalheErro.includes("different from the old password") ||
+            detalheErro.includes("same password") ||
+            detalheErro.includes("same as the old password") ||
+            detalheErro.includes("password reuse") ||
+            detalheErro.includes("previous password") ||
+            detalheErro.includes("already been used")
+        ) {
+            errorElement.textContent =
+                "A nova senha deve ser diferente da senha anterior. Escolha outra senha.";
+        } else {
+            errorElement.textContent = error.message
+                ? "Não foi possível alterar a senha: " + error.message
+                : "Ocorreu um erro ao alterar a senha. Tente novamente.";
+        }
+
+    }finally{
+
+        button.disabled = false;
+        button.textContent = "Salvar nova senha";
+
+    }
+
+}
+
+
+function togglePasswordVisibility(inputId, button){
+    const campo = document.getElementById(inputId);
+
+    if (!campo || !button) {
+        return;
+    }
+
+    const mostrar = campo.type === "password";
+
+    campo.type = mostrar ? "text" : "password";
+    button.setAttribute("aria-pressed", String(mostrar));
+    button.setAttribute(
+        "aria-label",
+        mostrar ? "Ocultar senha" : "Mostrar senha"
+    );
+
+    if (mostrar) {
+        button.innerHTML = `
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M3 3l18 18M10.6 5.2A10.8 10.8 0 0 1 12 5c6.4 0 10 7 10 7a16 16 0 0 1-3.1 3.8M6.2 6.2C3.5 8 2 12 2 12s3.6 7 10 7c1.5 0 2.8-.4 4-1"
+                    fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"
+                    fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round"/>
+            </svg>`;
+    } else {
+        button.innerHTML = `
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"
+                    fill="none" stroke="currentColor" stroke-width="2"/>
+                <circle cx="12" cy="12" r="3"
+                    fill="none" stroke="currentColor" stroke-width="2"/>
+            </svg>`;
+    }
+}
+async function createAccount(event){
+
+    event.preventDefault();
+
+    const fullName =
+        document
+            .getElementById("registerFullName")
+            .value
+            .trim()
+            .replace(/\s+/g, " ");
+
+    const email =
+        document
+            .getElementById("registerEmail")
+            .value
+            .trim()
+            .toLowerCase();
+
+    const password =
+        document
+            .getElementById("registerPassword")
+            .value;
+
+    const confirmation =
+        document
+            .getElementById(
+                "registerPasswordConfirm"
+            )
+            .value;
+
+    const club =
+        document
+            .getElementById("registerClub")
+            .value;
+
+    const button =
+        document
+            .getElementById("registerButton");
+
+    setRegisterError("");
+    setRegisterSuccess("");
+
+    if(
+        !fullName ||
+        !email ||
+        !password ||
+        !confirmation ||
+        !club
+    ){
+
+        setRegisterError(
+            "Preencha todos os campos."
+        );
+
+        return;
+    }
+
+    const nameParts =
+        fullName.split(/\s+/).filter(Boolean);
+
+    if(nameParts.length < 2){
+
+        setRegisterError(
+            "Informe seu nome e sobrenome."
+        );
+
+        return;
+    }
+
+    if(password.length < 6){
+
+        setRegisterError(
+            "A senha deve ter pelo menos 6 caracteres."
+        );
+
+        return;
+    }
+
+    if(password !== confirmation){
+
+        setRegisterError(
+            "As senhas não coincidem."
+        );
+
+        return;
+    }
+
+    button.disabled = true;
+
+    button.textContent =
+        "Criando conta...";
+
+    try{
+
+        const {
+            data: nomePermitido,
+            error: erroValidacaoNome
+        } = await supabaseClient.rpc(
+            "nome_completo_sem_termos_proibidos",
+            { p_nome: fullName }
+        );
+
+        if(erroValidacaoNome){
+
+            console.error(
+                "Erro ao validar nome:",
+                erroValidacaoNome
+            );
+
+            setRegisterError(
+                "Não foi possível validar o nome. Tente novamente."
+            );
+
+            return;
+        }
+
+        if(nomePermitido !== true){
+
+            setRegisterError(
+                "O nome informado contém termos não permitidos."
+            );
+
+            return;
+        }
+
+        const {
+            data: emailPermitido,
+            error: erroValidacaoEmail
+        } = await supabaseClient.rpc(
+            "email_sem_termos_proibidos",
+            { p_email: email }
+        );
+
+        if(erroValidacaoEmail){
+
+            console.error(
+                "Erro ao validar e-mail:",
+                erroValidacaoEmail
+            );
+
+            setRegisterError(
+                "Não foi possível validar o e-mail. Tente novamente."
+            );
+
+            return;
+        }
+
+        if(emailPermitido !== true){
+
+            setRegisterError(
+                "O e-mail informado contém termos não permitidos."
+            );
+
+            return;
+        }
+
+        const {
+            data,
+            error
+        } =
+            await supabaseClient.auth.signUp({
+                email:email,
+                password:password,
+                options:{
+                    emailRedirectTo: getAuthRedirectUri(),
+                    data:{
+                        nome_completo:fullName,
+                        clube:club
+                    }
+                }
+            });
+
+        if(error){
+
+            console.error(
+                "Erro Supabase:",
+                error
+            );
+
+            let message =
+                error.message ||
+                "Não foi possível criar a conta.";
+
+            if(
+                message
+                    .toLowerCase()
+                    .includes(
+                        "already registered"
+                    )
+            ){
+
+                message =
+                    "Este e-mail já está cadastrado.";
+
+            }
+
+            setRegisterError(
+                message
+            );
+
+            return;
+        }
+
+        if(
+            data &&
+            data.user
+        ){
+
+            setRegisterSuccess(
+                "Cadastro iniciado! Enviamos um e-mail de confirmação para " +
+                email +
+                ". Abra a mensagem e confirme seu endereço antes de entrar no aplicativo."
+            );
+
+            document
+                .getElementById(
+                    "registerPassword"
+                )
+                .value = "";
+
+            document
+                .getElementById(
+                    "registerPasswordConfirm"
+                )
+                .value = "";
+
+        }
+
+    }catch(error){
+
+        console.error(
+            "Erro inesperado:",
+            error
+        );
+
+        setRegisterError(
+            "Erro ao conectar ao servidor."
+        );
+
+    }finally{
+
+        button.disabled = false;
+
+        button.textContent =
+            "Criar minha conta";
+
+    }
+
+}
+
+
+async function loginUser(){
+
+    const email =
+        document
+            .getElementById("loginEmail")
+            .value
+            .trim()
+            .toLowerCase();
+
+    const password =
+        document
+            .getElementById("loginPassword")
+            .value;
+
+    const button =
+        document
+            .getElementById("loginButton");
+
+    setLoginError("");
+
+    if(
+        !email ||
+        !password
+    ){
+
+        setLoginError(
+            "Digite seu e-mail e sua senha."
+        );
+
+        return;
+    }
+
+    button.disabled = true;
+
+    button.textContent =
+        "Entrando...";
+
+    try{
+
+        const {
+            data,
+            error
+        } =
+            await supabaseClient.auth
+                .signInWithPassword({
+                    email:email,
+                    password:password
+                });
+
+        if(error){
+
+            console.error(
+                "Erro de login:",
+                error
+            );
+
+            setLoginError(
+                "E-mail ou senha incorretos."
+            );
+
+            return;
+        }
+
+        if(!data.user){
+
+            setLoginError(
+                "Não foi possível iniciar a sessão."
+            );
+
+            return;
+        }
+
+        currentUser =
+            data.user;
+
+        document
+            .getElementById(
+                "loginPassword"
+            )
+            .value = "";
+
+        await finishAuthenticatedLogin();
+
+    }catch(error){
+
+        console.error(
+            "Erro:",
+            error
+        );
+
+        setLoginError(
+            "Erro ao conectar ao servidor."
+        );
+
+    }finally{
+
+        button.disabled = false;
+
+        button.textContent =
+            "Entrar";
+
+    }
+
+}
+
+
+async function loginGoogle(){
+
+    const button =
+        document.getElementById(
+            "googleLoginButton"
+        );
+
+    if(!button){
+        return;
+    }
+
+    button.disabled = true;
+
+    button.textContent =
+        "Conectando...";
+
+    setLoginError("");
+
+    try{
+
+        const {
+            data,
+            error
+        } =
+            await supabaseClient.auth
+                .signInWithOAuth({
+                    provider:"google",
+                    options:{
+                        redirectTo: getAuthRedirectUri(),
+
+                        skipBrowserRedirect:true
+                    }
+                });
+
+        if(error){
+
+            console.error(
+                "ERRO GOOGLE OAUTH:",
+                error
+            );
+
+            setLoginError(
+                error.message ||
+                "Não foi possível iniciar o login com Google."
+            );
+
+            return;
+        }
+
+        if (!data || !data.url) {
+            throw new Error("O Google não retornou a URL de autenticação.");
+        }
+
+        if (window.AndroidDB &&
+            typeof window.AndroidDB.openExternalAuthUrl === "function") {
+            const abriuNavegador =
+                window.AndroidDB.openExternalAuthUrl(data.url);
+
+            if (!abriuNavegador) {
+                throw new Error("Não foi possível abrir a autenticação no navegador.");
+            }
+        } else {
+            window.location.href = data.url;
+        }
+
+        console.log("Autenticação Google aberta.");
+
+    }catch(error){
+
+        console.error(
+            "ERRO GOOGLE OAUTH:",
+            error
+        );
+
+        setLoginError(
+            error &&
+            error.message
+                ? error.message
+                : "Erro ao conectar com o Google."
+        );
+
+    }finally{
+
+        button.disabled = false;
+
+        button.innerHTML = `
+            <svg
+                class="google-icon"
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg">
+
+                <path
+                    fill="#4285F4"
+                    d="M21.35 12.27c0-.79-.07-1.55-.22-2.27H12v4.3h5.24a4.48 4.48 0 0 1-1.94 2.94v2.45h3.14c1.84-1.69 2.91-4.18 2.91-7.42z"/>
+
+                <path
+                    fill="#34A853"
+                    d="M12 21.5c2.63 0 4.84-.87 6.45-2.36l-3.14-2.45c-.87.58-1.98.93-3.31.93-2.55 0-4.71-1.72-5.49-4.03H3.27v2.53A9.74 9.74 0 0 0 12 21.5z"/>
+
+                <path
+                    fill="#FBBC05"
+                    d="M6.51 13.59A5.86 5.86 0 0 1 6.2 12c0-.55.1-1.08.31-1.59V7.88H3.27A9.5 9.5 0 0 0 2.25 12c0 1.53.37 2.97 1.02 4.12l3.24-2.53z"/>
+
+                <path
+                    fill="#EA4335"
+                    d="M12 6.38c1.43 0 2.71.49 3.72 1.46l2.79-2.79C16.83 3.47 14.63 2.5 12 2.5a9.74 9.74 0 0 0-8.73 5.38l3.24 2.53c1.01-2.31 3.17-4.03 5.72-4.03z"/>
+
+            </svg>
+
+            Continuar com Google
+        `;
+
+    }
+
+}
+
+
+/* ============================================================
+PERFIL
+============================================================ */
+
+async function loadCurrentProfile(){
+
+    if(!currentUser){
+        return;
+    }
+
+    try{
+
+        const {
+            data,
+            error
+        } =
+            await supabaseClient
+                .from("profiles")
+                .select("*")
+                .eq(
+                    "id",
+                    currentUser.id
+                )
+                .maybeSingle();
+
+        if(error){
+
+            console.error(
+                "Erro ao carregar perfil:",
+                error
+            );
+
+            return;
+        }
+
+        currentProfile =
+            data || null;
+
+    }catch(error){
+
+        console.error(error);
+
+    }
+
+}
+
+
+/* ============================================================
+LOGOUT
+============================================================ */
+
+async function logoutUser(){
+
+    try{
+
+        await supabaseClient.auth.signOut();
+
+    }catch(error){
+
+        console.error(error);
+
+    }
+
+    currentUser = null;
+    currentProfile = null;
+
+    RODADA_ATUAL = null;
+
+    m = [];
+
+    authenticationFlowRunning = false;
+
+    roundLockedByTime = false;
+
+    if(countdownInterval){
+
+        clearInterval(
+            countdownInterval
+        );
+
+        countdownInterval = null;
+
+    }
+
+    restorePredictionFooter();
+
+    hideRequiredClubScreen();
+
+    hideAllScreens();
+
+    updateActiveMenuItem(
+        "navHome"
+    );
+
+    document.body.classList.remove(
+        "app-authenticated"
+    );
+
+    document
+        .getElementById(
+            "loginScreen"
+        )
+        .style.display = "flex";
+
+    showLogin();
+
+    setLoginError("");
+
+    setStatus(
+        "✓ Faça login para continuar"
+    );
+
+    updatePredictionCounter();
+
+}
+
+
+/* ============================================================
+CALENDÁRIO
+============================================================ */
+
+async function loadCalendar(){
+
+    setStatus(
+        "Verificando rodada aberta..."
+    );
+
+    try{
+
+        /*
+         * Não chamamos loadOpenRound() novamente aqui.
+         * finishAuthenticatedLogin() já descobriu a rodada.
+         */
+
+        roundLockedByTime = false;
+
+        if(!RODADA_ATUAL){
+
+            gamesElement.innerHTML = `
+                <div class="game">
+
+                    <b>
+                        Nenhuma rodada aberta para palpites.
+                    </b>
+
+                    <p
+                        style="
+                            font-size:11px;
+                            color:#667169
+                        ">
+
+                        Aguarde a abertura da próxima rodada.
+
+                    </p>
+
+                </div>
+            `;
+
+            setStatus(
+                "⚠ Nenhuma rodada aberta"
+            );
+
+            updatePredictionCounter();
+
+            return;
+        }
+
+        setStatus(
+            "Carregando jogos da Rodada " +
+            RODADA_ATUAL +
+            "..."
+        );
+
+        const {
+            data,
+            error
+        } =
+            await supabaseClient
+                .from(
+                    "calendario_brasileirao"
+                )
+                .select(`
+                    ref_cbf,
+                    rodada,
+                    mandante,
+                    visitante,
+                    data_prevista,
+                    hora_prevista,
+                    status
+                `)
+                .eq(
+                    "temporada",
+                    TEMPORADA_ATUAL
+                )
+                .eq(
+                    "rodada",
+                    RODADA_ATUAL
+                )
+                .eq(
+                    "aberta_para_palpite",
+                    true
+                )
+                .order(
+                    "data_prevista",
+                    {
+                        ascending:true,
+                        nullsFirst:false
+                    }
+                )
+                .order(
+                    "hora_prevista",
+                    {
+                        ascending:true,
+                        nullsFirst:false
+                    }
+                )
+                .order(
+                    "ref_cbf",
+                    {
+                        ascending:true
+                    }
+                );
+
+        if(error){
+
+            console.error(
+                "Erro ao carregar calendário:",
+                error
+            );
+
+            gamesElement.innerHTML = `
+                <div class="game">
+
+                    <b>
+                        Não foi possível carregar os jogos.
+                    </b>
+
+                    <p
+                        style="
+                            font-size:11px;
+                            color:#667169
+                        ">
+
+                        Verifique sua conexão e tente novamente.
+
+                    </p>
+
+                </div>
+            `;
+
+            setStatus(
+                "⚠ Erro ao carregar jogos"
+            );
+
+            return;
+        }
+
+        if(
+            !data ||
+            data.length === 0
+        ){
+
+            gamesElement.innerHTML = `
+                <div class="game">
+
+                    <b>
+                        Nenhum jogo encontrado.
+                    </b>
+
+                    <p
+                        style="
+                            font-size:11px;
+                            color:#667169
+                        ">
+
+                        A rodada ainda não foi cadastrada.
+
+                    </p>
+
+                </div>
+            `;
+
+            setStatus(
+                "⚠ Nenhum jogo cadastrado"
+            );
+
+            updatePredictionCounter();
+
+            return;
+        }
+
+        /*
+         * O primeiro jogo da rodada é o que define
+         * o encerramento dos palpites.
+         *
+         * A data é date e a hora é time.
+         * O horário é interpretado como horário de Brasília.
+         */
+
+        countdownDeadline =
+            data[0].data_prevista &&
+            data[0].hora_prevista
+                ? `${data[0].data_prevista}T${String(data[0].hora_prevista).slice(0,8)}-03:00`
+                : null;
+
+        startCountdown();
+
+        m =
+            data.map(
+                jogo => [
+
+                    formatarDataJogo(
+                        jogo.data_prevista
+                    ),
+
+                    jogo.mandante,
+
+                    jogo.visitante,
+
+                    jogo.ref_cbf
+
+                ]
+            );
+
+        renderGames();
+
+        setStatus(
+            "✓ " +
+            m.length +
+            " jogos carregados · Rodada " +
+            RODADA_ATUAL
+        );
+
+    }catch(error){
+
+        console.error(
+            "Erro inesperado ao carregar calendário:",
+            error
+        );
+
+        setStatus(
+            "⚠ Erro de conexão"
+        );
+
+    }
+
+}
+
+
+/* ============================================================
+RENDER
+============================================================ */
+
+function renderGames(){
+
+    if(!gamesElement){
+        return;
+    }
+
+    gamesElement.innerHTML =
+        m.map(
+            (x,i) => `
+
+                <article class="game">
+
+                    <div class="meta">
+
+                        <span>
+                            ${x[0]}
+                        </span>
+
+                        <span>
+                            RODADA ${RODADA_ATUAL}
+                        </span>
+
+                    </div>
+
+                    <div class="teams">
+
+                        <b>
+                            ${x[1]}
+                        </b>
+
+                        <span>
+                            VS
+                        </span>
+
+                        <b>
+                            ${x[2]}
+                        </b>
+
+                    </div>
+
+                    <div class="score">
+
+                        <input
+                            data-i="${i}"
+                            data-s="h"
+                            type="number"
+                            min="0"
+                            max="20"
+                            step="1"
+                            inputmode="numeric"
+                            placeholder="–">
+
+                        <span>
+                            –
+                        </span>
+
+                        <input
+                            data-i="${i}"
+                            data-s="a"
+                            type="number"
+                            min="0"
+                            max="20"
+                            step="1"
+                            inputmode="numeric"
+                            placeholder="–">
+
+                    </div>
+
+                </article>
+
+            `
+        )
+        .join("");
+
+    attachPredictionEvents();
+
+    updatePredictionCounter();
+
+}
+
+
+/* ============================================================
+CARREGAR PALPITES
+============================================================ */
+
+async function loadUserPredictions(){
+
+    if(!currentUser){
+        return;
+    }
+
+    if(
+        !m.length ||
+        !RODADA_ATUAL
+    ){
+        return;
+    }
+
+    try{
+
+        const {
+            data,
+            error
+        } =
+            await supabaseClient.rpc(
+                "carregar_palpites_rodada",
+                {
+                    p_rodada:
+                        RODADA_ATUAL
+                }
+            );
+
+        if(error){
+
+            console.error(
+                "Erro ao carregar palpites:",
+                error
+            );
+
+            setStatus(
+                "⚠ Não foi possível carregar seus palpites"
+            );
+
+            return;
+        }
+
+        if(!data){
+
+            updatePredictionCounter();
+
+            return;
+        }
+
+        let enviadoEm = null;
+
+        data.forEach(
+            prediction => {
+
+                if(
+                    prediction.enviado_em
+                ){
+
+                    enviadoEm =
+                        prediction.enviado_em;
+
+                }
+
+                const index =
+                    m.findIndex(
+                        game =>
+
+                            normalizarTime(
+                                game[1]
+                            ) ===
+                            normalizarTime(
+                                prediction.mandante
+                            )
+
+                            &&
+
+                            normalizarTime(
+                                game[2]
+                            ) ===
+                            normalizarTime(
+                                prediction.visitante
+                            )
+                    );
+
+                if(index < 0){
+                    return;
+                }
+
+                const home =
+                    document.querySelector(
+                        `.score input[data-i="${index}"][data-s="h"]`
+                    );
+
+                const away =
+                    document.querySelector(
+                        `.score input[data-i="${index}"][data-s="a"]`
+                    );
+
+                if(home){
+
+                    home.value =
+                        prediction.palpite_mandante ?? "";
+
+                }
+
+                if(away){
+
+                    away.value =
+                        prediction.palpite_visitante ?? "";
+
+                }
+
+            }
+        );
+
+        updatePredictionCounter();
+
+        if(enviadoEm){
+
+            showSubmittedState(
+                enviadoEm
+            );
+
+            setStatus(
+                "✓ Palpites já enviados"
+            );
+
+        }else{
+
+            setStatus(
+                "✓ Palpites carregados"
+            );
+
+        }
+
+    }catch(error){
+
+        console.error(
+            "Erro ao carregar palpites:",
+            error
+        );
+
+        setStatus(
+            "⚠ Erro ao carregar palpites"
+        );
+
+    }
+
+}
+
+
+/* ============================================================
+VALIDAR
+============================================================ */
+
+function validarPlacar(valor){
+
+    if(
+        valor === null ||
+        valor === undefined ||
+        valor === ""
+    ){
+
+        return false;
+
+    }
+
+    const numero =
+        Number(valor);
+
+    return (
+        Number.isInteger(numero) &&
+        numero >= 0 &&
+        numero <= 20
+    );
+
+}
+
+
+/* ============================================================
+CONTADOR
+============================================================ */
+
+function updatePredictionCounter(){
+
+    const counter =
+        document.getElementById(
+            "predictionCounter"
+        );
+
+    const sendButton =
+        document.getElementById(
+            "sendPredictionsButton"
+        );
+
+    if(!counter){
+        return;
+    }
+
+    const gamesCount =
+        m.length;
+
+    let completed = 0;
+
+    for(
+        let i = 0;
+        i < gamesCount;
+        i++
+    ){
+
+        const home =
+            document.querySelector(
+                `.score input[data-i="${i}"][data-s="h"]`
+            );
+
+        const away =
+            document.querySelector(
+                `.score input[data-i="${i}"][data-s="a"]`
+            );
+
+        if(
+            home &&
+            away &&
+            validarPlacar(
+                home.value
+            ) &&
+            validarPlacar(
+                away.value
+            )
+        ){
+
+            completed++;
+
+        }
+
+    }
+
+    counter.textContent =
+        completed +
+        " de " +
+        gamesCount +
+        " palpites preenchidos";
+
+    if(sendButton){
+
+        sendButton.disabled =
+            completed !== gamesCount ||
+            !currentUser ||
+            !RODADA_ATUAL ||
+            roundLockedByTime;
+
+    }
+
+}
+
+
+/* ============================================================
+SALVAR PALPITE
+============================================================ */
+
+async function savePrediction(index){
+
+    if(roundLockedByTime){
+
+        setStatus(
+            "🔒 A rodada já começou. Os palpites não podem mais ser alterados."
+        );
+
+        return;
+
+    }
+
+    if(!currentUser){
+
+        setStatus(
+            "⚠ Faça login para salvar seus palpites"
+        );
+
+        return;
+    }
+
+    if(!RODADA_ATUAL){
+
+        setStatus(
+            "⚠ Nenhuma rodada aberta"
+        );
+
+        return;
+    }
+
+    const game =
+        m[index];
+
+    if(!game){
+        return;
+    }
+
+    const homeInput =
+        document.querySelector(
+            `.score input[data-i="${index}"][data-s="h"]`
+        );
+
+    const awayInput =
+        document.querySelector(
+            `.score input[data-i="${index}"][data-s="a"]`
+        );
+
+    if(
+        !homeInput ||
+        !awayInput
+    ){
+        return;
+    }
+
+    const homeValue =
+        homeInput.value === ""
+            ? null
+            : Number(
+                homeInput.value
+              );
+
+    const awayValue =
+        awayInput.value === ""
+            ? null
+            : Number(
+                awayInput.value
+              );
+
+    if(
+        !validarPlacar(homeValue) ||
+        !validarPlacar(awayValue)
+    ){
+        return;
+    }
+
+    try{
+
+        const {
+            data,
+            error
+        } =
+            await supabaseClient.rpc(
+                "salvar_palpite",
+                {
+                    p_rodada:
+                        RODADA_ATUAL,
+
+                    p_mandante:
+                        game[1],
+
+                    p_visitante:
+                        game[2],
+
+                    p_palpite_mandante:
+                        homeValue,
+
+                    p_palpite_visitante:
+                        awayValue
+                }
+            );
+
+        if(error){
+
+            console.error(
+                "Erro ao salvar palpite:",
+                error
+            );
+
+            setStatus(
+                "⚠ " +
+                (
+                    error.message ||
+                    "Não foi possível salvar"
+                )
+            );
+
+            if(
+                error.message &&
+                error.message
+                    .toLowerCase()
+                    .includes(
+                        "já começou"
+                    )
+            ){
+
+                lockPredictionsByTime();
+
+            }
+
+            return;
+        }
+
+        console.log(
+            "Palpite salvo:",
+            data
+        );
+
+        updatePredictionCounter();
+
+        setStatus(
+            "✓ Palpite salvo"
+        );
+
+    }catch(error){
+
+        console.error(
+            "Erro inesperado:",
+            error
+        );
+
+        setStatus(
+            "⚠ Erro de conexão"
+        );
+
+    }
+
+}
+
+
+/* ============================================================
+EVENTOS DOS PALPITES
+============================================================ */
+
+function attachPredictionEvents(){
+
+    document
+        .querySelectorAll(
+            ".score input"
+        )
+        .forEach(
+            element => {
+
+                element.addEventListener(
+                    "input",
+                    function(){
+
+                        if(
+                            this.value !== "" &&
+                            Number(this.value) > 20
+                        ){
+
+                            this.value = "20";
+
+                        }
+
+                        if(
+                            this.value !== "" &&
+                            Number(this.value) < 0
+                        ){
+
+                            this.value = "0";
+
+                        }
+
+                        updatePredictionCounter();
+
+                        const index =
+                            Number(
+                                this.dataset.i
+                            );
+
+                        if(
+                            predictionSaveTimers[index]
+                        ){
+
+                            clearTimeout(
+                                predictionSaveTimers[index]
+                            );
+
+                        }
+
+                        predictionSaveTimers[index] =
+                            setTimeout(
+                                function(){
+
+                                    savePrediction(
+                                        index
+                                    );
+
+                                },
+                                500
+                            );
+
+                    }
+                );
+
+            }
+        );
+
+    updatePredictionCounter();
+
+}
+
+
+/* ============================================================
+ESTADO ENVIADO
+============================================================ */
+
+function showSubmittedState(enviadoEm){
+
+    if(gamesElement){
+
+        gamesElement.style.display =
+            "block";
+
+    }
+
+    const guide =
+        document.querySelector(
+            ".guide"
+        );
+
+    if(guide){
+
+        guide.style.display =
+            "block";
+
+    }
+
+    document
+        .querySelectorAll(
+            ".score input"
+        )
+        .forEach(
+            input => {
+
+                input.disabled =
+                    true;
+
+            }
+        );
+
+    const footer =
+        document.getElementById(
+            "predictionFooter"
+        );
+
+    if(!footer){
+        return;
+    }
+
+    let dataFormatada = "";
+
+    if(enviadoEm){
+
+        const data =
+            new Date(
+                enviadoEm
+            );
+
+        if(
+            !Number.isNaN(
+                data.getTime()
+            )
+        ){
+
+            dataFormatada =
+                data.toLocaleString(
+                    "pt-BR"
+                );
+
+        }
+
+    }
+
+    footer.innerHTML = `
+
+        <div class="send-success">
+
+            <div class="send-success-icon">
+                ✓
+            </div>
+
+            <h3 class="send-success-title">
+                Palpites enviados!
+            </h3>
+
+            <p class="send-success-text">
+
+                Seus palpites da
+                <b>Rodada ${RODADA_ATUAL}</b>
+                foram registrados com sucesso.
+
+            </p>
+
+            <p class="send-success-small">
+
+                ${
+                    dataFormatada
+                        ? "Enviado em " +
+                          dataFormatada +
+                          ". "
+                        : ""
+                }
+
+                Os palpites não podem mais ser alterados.
+
+            </p>
+
+        </div>
+
+    `;
+
+}
+
+
+/* ============================================================
+ENVIAR
+============================================================ */
+
+function sendPredictions(){
+
+    if(roundLockedByTime){
+
+        setStatus(
+            "🔒 A rodada já começou. Os palpites não podem mais ser enviados."
+        );
+
+        return;
+
+    }
+
+    if(!currentUser){
+
+        setStatus(
+            "⚠ Faça login para enviar seus palpites"
+        );
+
+        return;
+    }
+
+    if(!RODADA_ATUAL){
+
+        setStatus(
+            "⚠ Nenhuma rodada aberta"
+        );
+
+        return;
+    }
+
+    if(isSendingPredictions){
+        return;
+    }
+
+    const confirmation =
+        document.getElementById(
+            "sendConfirmation"
+        );
+
+    if(confirmation){
+
+        confirmation.classList.add(
+            "show"
+        );
+
+    }
+
+}
+
+
+async function confirmSendPredictions(){
+
+    const confirmation =
+        document.getElementById(
+            "sendConfirmation"
+        );
+
+    if(confirmation){
+
+        confirmation.classList.remove(
+            "show"
+        );
+
+    }
+
+    if(!currentUser){
+
+        setStatus(
+            "⚠ Faça login para enviar seus palpites"
+        );
+
+        return;
+    }
+
+    if(!RODADA_ATUAL){
+
+        setStatus(
+            "⚠ Nenhuma rodada aberta"
+        );
+
+        return;
+    }
+
+    if(isSendingPredictions){
+        return;
+    }
+
+    isSendingPredictions = true;
+
+    const confirmButton =
+        document.getElementById(
+            "confirmSendButton"
+        );
+
+    if(confirmButton){
+
+        confirmButton.disabled = true;
+
+        confirmButton.textContent =
+            "ENVIANDO...";
+
+    }
+
+    try{
+
+        const {
+            data,
+            error
+        } =
+            await supabaseClient.rpc(
+                "enviar_palpites",
+                {
+                    p_rodada:
+                        RODADA_ATUAL
+                }
+            );
+
+        if(error){
+
+            console.error(
+                "Erro ao enviar palpites:",
+                error
+            );
+
+            playAppSound("som-aviso.wav");
+
+            setStatus(
+                "⚠ " +
+                (
+                    error.message ||
+                    "Não foi possível enviar os palpites."
+                )
+            );
+
+            if(
+                error.message &&
+                error.message
+                    .toLowerCase()
+                    .includes(
+                        "já começou"
+                    )
+            ){
+
+                lockPredictionsByTime();
+
+            }
+
+            return;
+        }
+
+        const dataEnvio =
+            data &&
+            data.enviado_em
+                ? data.enviado_em
+                : new Date().toISOString();
+
+        showSubmittedState(
+            dataEnvio
+        );
+
+        playAppSound("som-envio-palpites.wav");
+
+        setStatus(
+            "✓ Palpites enviados com sucesso!"
+        );
+
+    }catch(error){
+
+        console.error(
+            "Erro inesperado ao enviar palpites:",
+            error
+        );
+
+        playAppSound("som-aviso.wav");
+
+        setStatus(
+            "⚠ Erro de conexão ao enviar"
+        );
+
+    }finally{
+
+        isSendingPredictions = false;
+
+        if(confirmButton){
+
+            confirmButton.disabled = false;
+
+            confirmButton.textContent =
+                "CONFIRMAR ENVIO";
+
+        }
+
+    }
+
+}
+
+
+/* ============================================================
+BLOQUEIO POR HORÁRIO
+============================================================ */
+
+function lockPredictionsByTime(){
+
+    roundLockedByTime = true;
+
+    document
+        .querySelectorAll(
+            ".score input"
+        )
+        .forEach(
+            input => {
+
+                input.disabled = true;
+
+            }
+        );
+
+    const sendButton =
+        document.getElementById(
+            "sendPredictionsButton"
+        );
+
+    if(sendButton){
+
+        sendButton.disabled = true;
+
+    }
+
+    const confirmation =
+        document.getElementById(
+            "sendConfirmation"
+        );
+
+    if(confirmation){
+
+        confirmation.classList.remove(
+            "show"
+        );
+
+    }
+
+    const message =
+        document.getElementById(
+            "sendPredictionsMessage"
+        );
+
+    if(message){
+
+        message.textContent =
+            "A rodada já começou. Os palpites não podem mais ser alterados ou enviados.";
+
+    }
+
+    setStatus(
+        "🔒 Rodada iniciada — palpites encerrados"
+    );
+
+}
+
+function unlockPredictions(){
+
+    roundLockedByTime = false;
+
+    document
+        .querySelectorAll(
+            ".score input"
+        )
+        .forEach(
+            input => {
+
+                input.disabled = false;
+
+            }
+        );
+
+    updatePredictionCounter();
+
+}
+
+
+/* ============================================================
+TEMPORIZADOR
+============================================================ */
+
+function startCountdown(){
+
+    if(countdownInterval){
+
+        clearInterval(
+            countdownInterval
+        );
+
+    }
+
+    roundLockedByTime = false;
+
+    if(!countdownDeadline){
+
+        document.getElementById(
+            "clock"
+        ).textContent =
+            "00d 00:00:00";
+
+        return;
+
+    }
+
+    function updateClock(){
+
+        const now =
+            new Date().getTime();
+
+        const target =
+            new Date(
+                countdownDeadline
+            ).getTime();
+
+        const diff =
+            target - now;
+
+        if(diff <= 0){
+
+            document.getElementById(
+                "clock"
+            ).textContent =
+                "ENCERRADO";
+
+            clearInterval(
+                countdownInterval
+            );
+
+            lockPredictionsByTime();
+
+            return;
+
+        }
+
+        const days =
+            Math.floor(
+                diff /
+                (1000 * 60 * 60 * 24)
+            );
+
+        const hours =
+            Math.floor(
+                (
+                    diff %
+                    (1000 * 60 * 60 * 24)
+                ) /
+                (1000 * 60 * 60)
+            );
+
+        const minutes =
+            Math.floor(
+                (
+                    diff %
+                    (1000 * 60 * 60)
+                ) /
+                (1000 * 60)
+            );
+
+        const seconds =
+            Math.floor(
+                (
+                    diff %
+                    (1000 * 60)
+                ) /
+                1000
+            );
+
+        const clock =
+            document.getElementById(
+                "clock"
+            );
+
+        if(clock){
+
+            clock.textContent =
+                String(days).padStart(2,"0") +
+                "d " +
+                String(hours).padStart(2,"0") +
+                ":" +
+                String(minutes).padStart(2,"0") +
+                ":" +
+                String(seconds).padStart(2,"0");
+
+        }
+
+    }
+
+    updateClock();
+
+    countdownInterval =
+        setInterval(
+            updateClock,
+            1000
+        );
+
+}
+
+
+/* ============================================================
+ESTATÍSTICAS
+============================================================ */
+
+async function loadStatistics(){
+
+}
+
+
+/* ============================================================
+RANKING
+============================================================ */
+
+async function loadRanking(){
+
+    const tableBody = document.getElementById("rankingTableBody");
+
+    if (!tableBody) return;
+
+    tableBody.innerHTML = `
+        <tr>
+            <td colspan="3" style="text-align:center;padding:15px;color:#666;">
+                Carregando ranking...
+            </td>
+        </tr>
+    `;
+
+    try {
+        const { data, error } =
+            await supabaseClient.rpc("carregar_ranking");
+
+        if (error) throw error;
+
+        if (!data || data.length === 0) {
+            tableBody.innerHTML = `
+                <tr>
+                    <td colspan="3" style="text-align:center;padding:15px;color:#666;">
+                        Nenhum participante encontrado no ranking.
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
+        tableBody.innerHTML = data.map(item => `
+            <tr>
+                <td class="col-participante">
+                    ${item.participante || "Usuário"}
+                </td>
+                <td class="col-pontuacao">
+                    ${Number(item.pontos) || 0}
+                </td>
+                <td class="col-time">
+                    ${item.clube || "-"}
+                </td>
+            </tr>
+        `).join("");
+
+    } catch (err) {
+        console.error("Erro ao carregar ranking:", err);
+
+        tableBody.innerHTML = `
+            <tr>
+                <td colspan="3" style="text-align:center;padding:15px;color:#c62828;">
+                    Erro ao carregar o ranking.
+                </td>
+            </tr>
+        `;
+    }
+}
+
+/* ============================================================
+INICIALIZAÇÃO
+============================================================ */
+
+document.addEventListener(
+    "DOMContentLoaded",
+    function(){
+
+        /*
+         * Os botões ficam registrados aqui porque
+         * o rodapé pode ser reconstruído após logout/login.
+         */
+
+        restorePredictionFooter();
+
+    }
+);
+
+
+(async function initializeAuth() {
+    try {
+        const url = new URL(window.location.href);
+        const hashParams = new URLSearchParams(
+            url.hash ? url.hash.substring(1) : ""
+        );
+
+        const hasTokens = Boolean(
+            (hashParams.get("access_token") &&
+             hashParams.get("refresh_token")) ||
+            (url.searchParams.get("access_token") &&
+             url.searchParams.get("refresh_token"))
+        );
+
+        const hasCode = Boolean(
+            url.searchParams.get("code") ||
+            hashParams.get("code")
+        );
+
+        const hasAuthError = Boolean(
+            url.searchParams.get("error") ||
+            hashParams.get("error") ||
+            url.searchParams.get("error_description") ||
+            hashParams.get("error_description")
+        );
+
+        if (hasTokens || hasCode || hasAuthError) {
+            await window.handleGoogleCallback(url.href);
+            return;
+        }
+
+        const { data, error } =
+            await supabaseClient.auth.getSession();
+
+        if (error) {
+            throw error;
+        }
+
+        if (data && data.session && data.session.user) {
+            currentUser = data.session.user;
+            await finishAuthenticatedLogin();
+        }
+    } catch (err) {
+        console.error("Erro ao inicializar autenticação:", err);
+        setLoginError(
+            err && err.message
+                ? err.message
+                : "Não foi possível concluir o login."
+        );
+    }
+})();</script>
+
+</body>
+
+</html>

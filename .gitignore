@@ -1,0 +1,11 @@
+﻿local.properties
+*.jks
+*.keystore
+.env
+.env.*
+!.env.example
+build/
+.gradle/
+.idea/
+.DS_Store
+Thumbs.db

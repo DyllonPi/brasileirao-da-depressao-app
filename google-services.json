@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "737231835324",
+    "project_id": "brasileirao-da-depressao",
+    "storage_bucket": "brasileirao-da-depressao.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:737231835324:android:b5913b5d41ea065d0ac0b9",
+        "android_client_info": {
+          "package_name": "br.com.palpiteiro.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA79vZl6lV2jNe041us01RbDI19fMAbu7c"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

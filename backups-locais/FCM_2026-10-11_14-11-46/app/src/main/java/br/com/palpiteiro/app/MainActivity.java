@@ -1,0 +1,431 @@
+package br.com.palpiteiro.app;
+
+import android.annotation.SuppressLint;
+import android.app.Activity;
+import android.content.Intent;
+import android.net.Uri;
+import android.os.Bundle;
+import android.webkit.JavascriptInterface;
+import android.webkit.WebChromeClient;
+import android.webkit.WebSettings;
+import android.webkit.WebView;
+import android.widget.Toast;
+import android.view.WindowInsets;
+
+import org.json.JSONArray;
+import org.json.JSONObject;
+
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+
+public class MainActivity extends Activity {
+
+    private HistoryDbHelper database;
+    private WebView view;
+    private String pendingCallbackUrl;
+    private boolean pageLoaded = false;
+
+    @SuppressLint({"SetJavaScriptEnabled", "AddJavascriptInterface"})
+    @Override
+    public void onCreate(Bundle state) {
+        super.onCreate(state);
+
+        database = new HistoryDbHelper(this);
+
+        importInitialHistory();
+
+        view = new WebView(this);
+
+        WebSettings settings = view.getSettings();
+
+        settings.setJavaScriptEnabled(true);
+        settings.setDomStorageEnabled(true);
+
+        settings.setMediaPlaybackRequiresUserGesture(false);
+
+        /*
+         * Permite que o WebView carregue os arquivos
+         * existentes dentro de android_asset.
+         */
+        settings.setAllowFileAccess(true);
+        settings.setAllowContentAccess(true);
+
+        view.addJavascriptInterface(
+                new DatabaseBridge(),
+                "AndroidDB"
+        );
+
+        view.setWebChromeClient(new WebChromeClient() {
+            @Override
+            public boolean onConsoleMessage(
+                    android.webkit.ConsoleMessage consoleMessage) {
+                android.util.Log.d(
+                        "BRASILEIRAO_JS",
+                        "Console " + consoleMessage.messageLevel()
+                                + " linha " + consoleMessage.lineNumber()
+                                + ": " + consoleMessage.message()
+                );
+                return true;
+            }
+        });
+        view.setWebViewClient(new android.webkit.WebViewClient() {
+
+            @Override
+            public boolean shouldOverrideUrlLoading(
+                    WebView webView,
+                    android.webkit.WebResourceRequest request) {
+
+                Uri uri = request.getUrl();
+
+                if ("brasileirao".equalsIgnoreCase(uri.getScheme())
+                        && "login-callback".equalsIgnoreCase(uri.getHost())) {
+                    handleDeepLink(new Intent(Intent.ACTION_VIEW, uri));
+                    return true;
+                }
+
+                return false;
+            }
+
+            @Override
+            public boolean shouldOverrideUrlLoading(
+                    WebView webView,
+                    String url) {
+
+                Uri uri = Uri.parse(url);
+
+                if ("brasileirao".equalsIgnoreCase(uri.getScheme())
+                        && "login-callback".equalsIgnoreCase(uri.getHost())) {
+                    handleDeepLink(new Intent(Intent.ACTION_VIEW, uri));
+                    return true;
+                }
+
+                return false;
+            }
+
+            @Override
+            public void onPageFinished(WebView webView, String url) {
+                super.onPageFinished(webView, url);
+                pageLoaded = true;
+                deliverPendingCallback();
+            }
+        });
+
+        view.loadUrl(
+                "file:///android_asset/index.html"
+        );
+
+        view.setOnApplyWindowInsetsListener((v, insets) -> {
+            v.setPadding(
+                    insets.getSystemWindowInsetLeft(),
+                    insets.getSystemWindowInsetTop(),
+                    insets.getSystemWindowInsetRight(),
+                    insets.getSystemWindowInsetBottom()
+            );
+            return insets;
+        });
+
+        setContentView(view);
+
+        /*
+         * Verifica se o aplicativo foi aberto
+         * atravÃ©s do callback do Google.
+         */
+        handleDeepLink(getIntent());
+    }
+
+
+    /*
+     * =========================
+     * DEEP LINK / GOOGLE LOGIN
+     * =========================
+     */
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+
+        setIntent(intent);
+
+        handleDeepLink(intent);
+    }
+
+
+    private void handleDeepLink(Intent intent) {
+        if (intent == null) {
+            return;
+        }
+
+        Uri uri = intent.getData();
+        if (uri == null) {
+            return;
+        }
+
+        if ("brasileirao".equalsIgnoreCase(uri.getScheme())
+                && "login-callback".equalsIgnoreCase(uri.getHost())) {
+
+            pendingCallbackUrl = uri.toString();
+
+            String fragment = uri.getFragment() == null ? "" : uri.getFragment();
+            android.net.Uri fragmentUri = android.net.Uri.parse(
+                    "https://callback.local/?" + fragment
+            );
+
+            android.util.Log.d(
+                    "BRASILEIRAO_OAUTH",
+                    "Callback recebido: scheme=" + uri.getScheme()
+                            + ", host=" + uri.getHost()
+                            + ", queryHasCode=" + (uri.getQueryParameter("code") != null)
+                            + ", queryHasAccessToken=" + (uri.getQueryParameter("access_token") != null)
+                            + ", queryHasRefreshToken=" + (uri.getQueryParameter("refresh_token") != null)
+                            + ", fragmentHasType=" + (fragmentUri.getQueryParameter("type") != null)
+                            + ", fragmentHasAccessToken=" + (fragmentUri.getQueryParameter("access_token") != null)
+                            + ", fragmentHasRefreshToken=" + (fragmentUri.getQueryParameter("refresh_token") != null)
+            );
+
+            deliverPendingCallback();
+        }
+    }
+
+    private void deliverPendingCallback() {
+        if (view == null || !pageLoaded || pendingCallbackUrl == null) {
+            return;
+        }
+
+        String callbackUrl = pendingCallbackUrl;
+        String escapedUrl = JSONObject.quote(callbackUrl);
+
+        String javascript =
+                "(function(url) {" +
+                "var tentativas = 0;" +
+                "var timer = setInterval(function() {" +
+                "tentativas++;" +
+                "if (typeof window.handleGoogleCallback === 'function') {" +
+                "clearInterval(timer);" +
+                "window.handleGoogleCallback(url);" +
+                "console.log('Callback de autenticação processado pelo app.');" +
+                "} else if (tentativas >= 100) {" +
+                "clearInterval(timer);" +
+                "console.error('A função de callback não ficou disponível.');" +
+                "}" +
+                "}, 100);" +
+                "})(" + escapedUrl + ");";
+
+        view.evaluateJavascript(javascript, null);
+
+        pendingCallbackUrl = null;
+    }
+    /*
+     * =========================
+     * IMPORTAR HISTÃ“RICO
+     * =========================
+     */
+
+    private void importInitialHistory() {
+
+        if (!database.isEmpty()) {
+            return;
+        }
+
+        try (
+                InputStream input =
+                        getAssets().open("historico.json")
+        ) {
+
+            ByteArrayOutputStream output =
+                    new ByteArrayOutputStream();
+
+            byte[] buffer =
+                    new byte[8192];
+
+            int read;
+
+            while (
+                    (read = input.read(buffer)) != -1
+            ) {
+
+                output.write(
+                        buffer,
+                        0,
+                        read
+                );
+            }
+
+            JSONObject history =
+                    new JSONObject(
+                            output.toString(
+                                    StandardCharsets.UTF_8.name()
+                            )
+                    );
+
+            database.importHistory(history);
+
+        } catch (Exception e) {
+
+            Toast.makeText(
+                    this,
+                    "NÃ£o foi possÃ­vel importar o histÃ³rico.",
+                    Toast.LENGTH_LONG
+            ).show();
+        }
+    }
+
+
+    /*
+     * =========================
+     * PONTE JAVASCRIPT
+     * =========================
+     */
+
+    public class DatabaseBridge {
+
+        @JavascriptInterface
+        public boolean openExternalAuthUrl(String url) {
+            try {
+                Uri uri = Uri.parse(url);
+
+                if (!"https".equalsIgnoreCase(uri.getScheme())
+                        || !"molcumgrqhmefzdrkrsb.supabase.co".equalsIgnoreCase(uri.getHost())
+                        || uri.getPort() != -1
+                        || uri.getUserInfo() != null
+                        || uri.getFragment() != null
+                        || uri.getQuery() == null
+                        || uri.getPath() == null
+                        || !uri.getPath().equals("/auth/v1/authorize")) {
+                    android.util.Log.w("BRASILEIRAO_OAUTH", "URL de autenticação rejeitada.");
+                    return false;
+                }
+
+                Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+                MainActivity.this.startActivity(intent);
+                android.util.Log.d("BRASILEIRAO_OAUTH", "Navegador externo iniciado.");
+                return true;
+
+            } catch (Exception e) {
+                android.util.Log.e("BRASILEIRAO_OAUTH", "Falha ao abrir navegador externo.", e);
+                return false;
+            }
+        }
+
+        /*
+         * =========================
+         * HISTÃ“RICO
+         * =========================
+         */
+
+        @JavascriptInterface
+        public String getHistory() {
+
+            return database.exportHistoryJson();
+        }
+
+
+        @JavascriptInterface
+        public boolean saveResponse(
+                String data,
+                String email,
+                String predictionsJson
+        ) {
+
+            try {
+
+                JSONArray predictions =
+                        new JSONArray(
+                                predictionsJson == null
+                                        ? "[]"
+                                        : predictionsJson
+                        );
+
+                database.insertResponse(
+                        data,
+                        email,
+                        predictions
+                );
+
+                return true;
+
+            } catch (Exception e) {
+
+                return false;
+            }
+        }
+
+
+        /*
+         * =========================
+         * CADASTRO
+         * =========================
+         */
+
+        @JavascriptInterface
+        public boolean createUser(
+                String email,
+                String password,
+                String club
+        ) {
+
+            return database.createUser(
+                    email,
+                    password,
+                    club
+            );
+        }
+
+
+        /*
+         * =========================
+         * VERIFICAR USUÃRIO
+         * =========================
+         */
+
+        @JavascriptInterface
+        public boolean userExists(
+                String email
+        ) {
+
+            return database.userExists(email);
+        }
+
+
+        /*
+         * =========================
+         * LOGIN
+         * =========================
+         */
+
+        @JavascriptInterface
+        public String loginUser(
+                String email,
+                String password
+        ) {
+
+            return database.loginUser(
+                    email,
+                    password
+            );
+        }
+    }
+
+
+    /*
+     * =========================
+     * ENCERRAMENTO
+     * =========================
+     */
+
+    @Override
+    protected void onDestroy() {
+
+        if (database != null) {
+            database.close();
+        }
+
+        super.onDestroy();
+    }
+}
+
+
+
+
+
+
