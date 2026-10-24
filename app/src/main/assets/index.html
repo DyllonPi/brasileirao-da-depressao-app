@@ -2791,33 +2791,32 @@ function criarEscudoTime(nome){
 
     const chave = normalizarTime(nome);
     const escudos = [
-        {nomes:["athletico paranaense","athletico-pr","athletico"], id:3432},
-        {nomes:["atletico mineiro","atletico-mg","atletico mg"], id:3427},
-        {nomes:["bahia"], id:692},
-        {nomes:["botafogo"], id:2864},
-        {nomes:["chapecoense","chapecoense sc"], id:710},
-        {nomes:["corinthians"], id:303},
-        {nomes:["coritiba","coritiba saf"], id:6285},
-        {nomes:["cruzeiro"], id:3371},
-        {nomes:["flamengo"], id:1024},
-        {nomes:["fluminense"], id:1095},
-        {nomes:["gremio","gremio fbpa"], id:2925},
-        {nomes:["internacional","internacional rs"], id:2696},
-        {nomes:["mirassol","mirassol fc"], id:11126},
-        {nomes:["palmeiras"], id:3422},
-        {nomes:["red bull bragantino","bragantino","rb bragantino"], id:7808},
-        {nomes:["remo","clube do remo"], id:11550},
-        {nomes:["santos","santos fc"], id:3684},
-        {nomes:["sao paulo","sao paulo fc"], id:3496},
-        {nomes:["vasco","vasco da gama","vasco da gama saf"], id:696},
-        {nomes:["vitoria","esporte clube vitoria"], id:3440}
+        {nomes:["athletico paranaense","athletico-pr","athletico"], arquivo:"athletico-paranaense.png"},
+        {nomes:["atletico mineiro","atletico-mg","atletico mg"], arquivo:"atletico-mineiro.png"},
+        {nomes:["bahia"], arquivo:"bahia.png"},
+        {nomes:["botafogo"], arquivo:"botafogo.png"},
+        {nomes:["chapecoense","chapecoense sc"], arquivo:"chapecoense.png"},
+        {nomes:["corinthians"], arquivo:"corinthians.png"},
+        {nomes:["coritiba","coritiba saf"], arquivo:"coritiba.png"},
+        {nomes:["cruzeiro"], arquivo:"cruzeiro.png"},
+        {nomes:["flamengo"], arquivo:"flamengo.png"},
+        {nomes:["fluminense"], arquivo:"fluminense.png"},
+        {nomes:["gremio","gremio fbpa"], arquivo:"gremio.png"},
+        {nomes:["internacional","internacional rs"], arquivo:"internacional.png"},
+        {nomes:["mirassol","mirassol fc"], arquivo:"mirassol.png"},
+        {nomes:["palmeiras"], arquivo:"palmeiras.png"},
+        {nomes:["red bull bragantino","bragantino","rb bragantino"], arquivo:"red-bull-bragantino.png"},
+        {nomes:["remo","clube do remo"], arquivo:"remo.png"},
+        {nomes:["santos","santos fc"], arquivo:"santos.png"},
+        {nomes:["sao paulo","sao paulo fc"], arquivo:"sao-paulo.png"},
+        {nomes:["vasco","vasco da gama","vasco da gama saf"], arquivo:"vasco.png"},
+        {nomes:["vitoria","esporte clube vitoria"], arquivo:"vitoria.png"}
     ];
 
     const time = escudos.find(item => item.nomes.includes(chave));
 
     if(time){
-        const folder = time.id % 32;
-        img.src = "https://cdn.sportmonks.com/images/soccer/teams/" + folder + "/" + time.id + ".png";
+        img.src = "images/" + time.arquivo;
         img.onerror = function(){
             img.onerror = null;
             img.style.display = "none";
