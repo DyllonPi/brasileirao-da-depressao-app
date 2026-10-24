@@ -2816,7 +2816,7 @@ function criarEscudoTime(nome){
     const time = escudos.find(item => item.nomes.includes(chave));
 
     if(time){
-        const folder = Math.floor(time.id / 100);
+        const folder = time.id % 32;
         img.src = "https://cdn.sportmonks.com/images/soccer/teams/" + folder + "/" + time.id + ".png";
         img.onerror = function(){
             img.onerror = null;
