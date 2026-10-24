@@ -2721,6 +2721,114 @@ function showRoundsFromMenu(){
     loadConsultationRound();
 }
 
+function traduzirStatusJogo(status){
+
+    if(!status){
+        return "A confirmar";
+    }
+
+    const original = String(status).trim();
+    const normalizado = original
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase()
+        .replace(/[_-]+/g, " ")
+        .replace(/\s+/g, " ");
+
+    const traducoes = {
+        "scheduled":"Agendado",
+        "not started":"Não iniciado",
+        "not_started":"Não iniciado",
+        "upcoming":"Agendado",
+        "timed":"Agendado",
+        "in progress":"Em andamento",
+        "inprogress":"Em andamento",
+        "live":"Em andamento",
+        "1st half":"Em andamento",
+        "half time":"Intervalo",
+        "halftime":"Intervalo",
+        "2nd half":"Em andamento",
+        "finished":"Finalizado",
+        "full time":"Finalizado",
+        "fulltime":"Finalizado",
+        "ft":"Finalizado",
+        "after extra time":"Finalizado (prorrogação)",
+        "after penalties":"Finalizado (pênaltis)",
+        "postponed":"Adiado",
+        "delayed":"Atrasado",
+        "cancelled":"Cancelado",
+        "canceled":"Cancelado",
+        "suspended":"Suspenso",
+        "abandoned":"Interrompido",
+        "awarded":"Resultado administrativo",
+        "finalizado":"Finalizado",
+        "encerrado":"Finalizado",
+        "em andamento":"Em andamento",
+        "intervalo":"Intervalo",
+        "adiado":"Adiado",
+        "cancelado":"Cancelado",
+        "suspenso":"Suspenso"
+    };
+
+    return traducoes[normalizado] || original;
+}
+
+function criarEscudoTime(nome){
+
+    const img = document.createElement("img");
+    img.alt = nome ? "Escudo do " + nome : "Escudo do time";
+    img.width = 44;
+    img.height = 44;
+    img.loading = "lazy";
+    img.decoding = "async";
+    img.style.objectFit = "contain";
+    img.style.width = "44px";
+    img.style.height = "44px";
+    img.style.borderRadius = "50%";
+    img.style.background = "#fff";
+    img.style.padding = "3px";
+    img.style.boxSizing = "border-box";
+
+    const chave = normalizarTime(nome);
+    const escudos = [
+        {nomes:["athletico paranaense","athletico-pr","athletico"], id:3432},
+        {nomes:["atletico mineiro","atletico-mg","atletico mg"], id:3427},
+        {nomes:["bahia"], id:692},
+        {nomes:["botafogo"], id:2864},
+        {nomes:["chapecoense","chapecoense sc"], id:710},
+        {nomes:["corinthians"], id:303},
+        {nomes:["coritiba","coritiba saf"], id:6285},
+        {nomes:["cruzeiro"], id:3371},
+        {nomes:["flamengo"], id:1024},
+        {nomes:["fluminense"], id:1095},
+        {nomes:["gremio","gremio fbpa"], id:2925},
+        {nomes:["internacional","internacional rs"], id:2696},
+        {nomes:["mirassol","mirassol fc"], id:11126},
+        {nomes:["palmeiras"], id:3422},
+        {nomes:["red bull bragantino","bragantino","rb bragantino"], id:7808},
+        {nomes:["remo","clube do remo"], id:11550},
+        {nomes:["santos","santos fc"], id:3684},
+        {nomes:["sao paulo","sao paulo fc"], id:3496},
+        {nomes:["vasco","vasco da gama","vasco da gama saf"], id:696},
+        {nomes:["vitoria","esporte clube vitoria"], id:3440}
+    ];
+
+    const time = escudos.find(item => item.nomes.includes(chave));
+
+    if(time){
+        const folder = Math.floor(time.id / 100);
+        img.src = "https://cdn.sportmonks.com/images/soccer/teams/" + folder + "/" + time.id + ".png";
+        img.onerror = function(){
+            img.onerror = null;
+            img.style.display = "none";
+        };
+    }else{
+        img.style.display = "none";
+    }
+
+    return img;
+}
+
 async function loadConsultationRound(){
 
     const select = document.getElementById("consultRoundSelect");
@@ -2796,23 +2904,35 @@ async function loadConsultationRound(){
             dataHora.textContent = dataFormatada;
 
             const status = document.createElement("span");
-            status.textContent = jogo.status || "A confirmar";
+            status.textContent = traduzirStatusJogo(jogo.status);
 
             meta.append(dataHora, status);
 
             const teams = document.createElement("div");
             teams.className = "teams";
+            teams.style.display = "grid";
             teams.style.gridTemplateColumns = "minmax(0,1fr) auto minmax(0,1fr)";
+            teams.style.alignItems = "center";
             teams.style.gap = "10px";
 
-            const home = document.createElement("strong");
-            home.style.textAlign = "right";
-            home.style.overflowWrap = "anywhere";
-            home.textContent = jogo.mandante || "Mandante";
+            const home = document.createElement("div");
+            home.style.display = "flex";
+            home.style.flexDirection = "column";
+            home.style.alignItems = "center";
+            home.style.gap = "7px";
+            home.style.minWidth = "0";
+
+            const homeLogo = criarEscudoTime(jogo.mandante);
+            const homeName = document.createElement("strong");
+            homeName.style.textAlign = "center";
+            homeName.style.overflowWrap = "anywhere";
+            homeName.style.fontSize = "13px";
+            homeName.textContent = jogo.mandante || "Mandante";
+            home.append(homeLogo, homeName);
 
             const center = document.createElement("div");
             center.style.textAlign = "center";
-            center.style.minWidth = "48px";
+            center.style.minWidth = "56px";
 
             const hasScore = jogo.resultado_mandante !== null &&
                 jogo.resultado_mandante !== undefined &&
@@ -2828,13 +2948,23 @@ async function loadConsultationRound(){
             }else{
                 center.style.font = "12px monospace";
                 center.style.color = "#8a958c";
-                center.textContent = "×";
+                center.textContent = "VS";
             }
 
-            const away = document.createElement("strong");
-            away.style.textAlign = "left";
-            away.style.overflowWrap = "anywhere";
-            away.textContent = jogo.visitante || "Visitante";
+            const away = document.createElement("div");
+            away.style.display = "flex";
+            away.style.flexDirection = "column";
+            away.style.alignItems = "center";
+            away.style.gap = "7px";
+            away.style.minWidth = "0";
+
+            const awayLogo = criarEscudoTime(jogo.visitante);
+            const awayName = document.createElement("strong");
+            awayName.style.textAlign = "center";
+            awayName.style.overflowWrap = "anywhere";
+            awayName.style.fontSize = "13px";
+            awayName.textContent = jogo.visitante || "Visitante";
+            away.append(awayLogo, awayName);
 
             teams.append(home, center, away);
             card.append(meta, teams);
