@@ -1373,6 +1373,17 @@ MENU LATERAL
 
         <button
             type="button"
+            id="navRounds"
+            class="side-menu-item"
+            onclick="showRoundsFromMenu()">
+
+            <span class="menu-icon">📅</span>
+            <span>Consultar rodadas</span>
+
+        </button>
+
+        <button
+            type="button"
             id="navRanking"
             class="side-menu-item"
             onclick="showRankingFromMenu()">
@@ -2099,6 +2110,45 @@ Errar o resultado = 0 pontos
 
 
 <!-- ============================================================
+CONSULTAR RODADAS — SOMENTE LEITURA
+============================================================ -->
+
+<section
+    id="roundsScreen"
+    style="display:none;padding:0 16px 44px;">
+
+    <div style="display:flex;align-items:center;justify-content:center;position:relative;margin-bottom:20px;">
+        <button
+            type="button"
+            onclick="showHomeFromMenu()"
+            aria-label="Voltar para tela inicial"
+            style="position:absolute;left:0;border:0;background:#254aa5;color:#fff;border-radius:10px;padding:10px 14px;font-size:20px;cursor:pointer;">
+            ←
+        </button>
+
+        <div style="text-align:center;">
+            <div class="eyebrow" style="color:#254aa5;margin-bottom:2px;">TEMPORADA 2026</div>
+            <h1 style="margin:0;font-size:26px;">Consultar rodadas</h1>
+        </div>
+    </div>
+
+    <div style="margin:0 0 18px;">
+        <label for="consultRoundSelect" style="display:block;margin-bottom:8px;font-weight:700;color:#254aa5;">Selecione a rodada</label>
+        <select
+            id="consultRoundSelect"
+            onchange="loadConsultationRound()"
+            style="width:100%;padding:12px;border:1px solid #cbd5e1;border-radius:10px;background:#fff;font-size:16px;color:#171717;">
+            <option value="1">Rodada 1</option><option value="2">Rodada 2</option><option value="3">Rodada 3</option><option value="4">Rodada 4</option><option value="5">Rodada 5</option><option value="6">Rodada 6</option><option value="7">Rodada 7</option><option value="8">Rodada 8</option><option value="9">Rodada 9</option><option value="10">Rodada 10</option><option value="11">Rodada 11</option><option value="12">Rodada 12</option><option value="13">Rodada 13</option><option value="14">Rodada 14</option><option value="15">Rodada 15</option><option value="16">Rodada 16</option><option value="17">Rodada 17</option><option value="18">Rodada 18</option><option value="19">Rodada 19</option><option value="20">Rodada 20</option><option value="21">Rodada 21</option><option value="22">Rodada 22</option><option value="23">Rodada 23</option><option value="24">Rodada 24</option><option value="25">Rodada 25</option><option value="26">Rodada 26</option><option value="27">Rodada 27</option><option value="28">Rodada 28</option><option value="29">Rodada 29</option><option value="30">Rodada 30</option><option value="31">Rodada 31</option><option value="32">Rodada 32</option><option value="33">Rodada 33</option><option value="34">Rodada 34</option><option value="35">Rodada 35</option><option value="36">Rodada 36</option><option value="37">Rodada 37</option><option value="38">Rodada 38</option>
+        </select>
+    </div>
+
+    <p id="consultRoundMessage" role="status" style="font-size:13px;color:#667169;line-height:1.5;">Selecione uma rodada para consultar os jogos e resultados.</p>
+    <div id="consultRoundGames" aria-live="polite"></div>
+
+</section>
+
+
+<!-- ============================================================
 RANKING
 ============================================================ -->
 
@@ -2598,6 +2648,9 @@ function hideAllScreens(){
     const ranking =
         document.getElementById("rankingScreen");
 
+    const rounds =
+        document.getElementById("roundsScreen");
+
     const receipts =
         document.getElementById("receiptsScreen");
 
@@ -2610,6 +2663,10 @@ function hideAllScreens(){
 
     if(ranking){
         ranking.style.display = "none";
+    }
+
+    if(rounds){
+        rounds.style.display = "none";
     }
 
     if(receipts){
@@ -2644,6 +2701,152 @@ function showHomeFromMenu(){
 
     }
 
+}
+
+function showRoundsFromMenu(){
+
+    closeSideMenu();
+    hideAllScreens();
+    updateActiveMenuItem("navRounds");
+
+    const screen = document.getElementById("roundsScreen");
+    if(screen){
+        screen.style.display = "block";
+        screen.scrollIntoView({
+            behavior:"smooth",
+            block:"start"
+        });
+    }
+
+    loadConsultationRound();
+}
+
+async function loadConsultationRound(){
+
+    const select = document.getElementById("consultRoundSelect");
+    const gamesContainer = document.getElementById("consultRoundGames");
+    const message = document.getElementById("consultRoundMessage");
+
+    if(!select || !gamesContainer || !message){
+        return;
+    }
+
+    const rodada = Number(select.value);
+
+    if(!Number.isInteger(rodada) || rodada < 1 || rodada > 38){
+        message.textContent = "Selecione uma rodada válida.";
+        gamesContainer.replaceChildren();
+        return;
+    }
+
+    message.textContent = "Carregando jogos da Rodada " + rodada + "...";
+    gamesContainer.replaceChildren();
+
+    try{
+        const {data, error} = await supabaseClient
+            .from("calendario_brasileirao")
+            .select(`
+                ref_cbf,
+                rodada,
+                mandante,
+                visitante,
+                data_prevista,
+                hora_prevista,
+                status,
+                resultado_mandante,
+                resultado_visitante
+            `)
+            .eq("temporada", 2026)
+            .eq("rodada", rodada)
+            .order("data_prevista", {ascending:true, nullsFirst:false})
+            .order("hora_prevista", {ascending:true, nullsFirst:false})
+            .order("ref_cbf", {ascending:true});
+
+        if(error){
+            throw error;
+        }
+
+        if(!data || data.length === 0){
+            message.textContent = "Nenhum jogo cadastrado para a Rodada " + rodada + " da temporada 2026.";
+            return;
+        }
+
+        const fragment = document.createDocumentFragment();
+
+        data.forEach(jogo => {
+            const card = document.createElement("article");
+            card.className = "game";
+            card.style.borderRadius = "12px";
+            card.style.padding = "16px";
+
+            const meta = document.createElement("div");
+            meta.className = "meta";
+
+            const dataHora = document.createElement("span");
+            let dataFormatada = "Data a confirmar";
+            if(jogo.data_prevista){
+                const dataObj = new Date(jogo.data_prevista + "T00:00:00");
+                if(!Number.isNaN(dataObj.getTime())){
+                    dataFormatada = dataObj.toLocaleDateString("pt-BR");
+                }
+            }
+            if(jogo.hora_prevista){
+                dataFormatada += " · " + String(jogo.hora_prevista).slice(0,5);
+            }
+            dataHora.textContent = dataFormatada;
+
+            const status = document.createElement("span");
+            status.textContent = jogo.status || "A confirmar";
+
+            meta.append(dataHora, status);
+
+            const teams = document.createElement("div");
+            teams.className = "teams";
+            teams.style.gridTemplateColumns = "minmax(0,1fr) auto minmax(0,1fr)";
+            teams.style.gap = "10px";
+
+            const home = document.createElement("strong");
+            home.style.textAlign = "right";
+            home.style.overflowWrap = "anywhere";
+            home.textContent = jogo.mandante || "Mandante";
+
+            const center = document.createElement("div");
+            center.style.textAlign = "center";
+            center.style.minWidth = "48px";
+
+            const hasScore = jogo.resultado_mandante !== null &&
+                jogo.resultado_mandante !== undefined &&
+                jogo.resultado_visitante !== null &&
+                jogo.resultado_visitante !== undefined &&
+                jogo.resultado_mandante !== "" &&
+                jogo.resultado_visitante !== "";
+
+            if(hasScore){
+                center.style.font = "700 22px monospace";
+                center.style.color = "#254aa5";
+                center.textContent = String(jogo.resultado_mandante) + " × " + String(jogo.resultado_visitante);
+            }else{
+                center.style.font = "12px monospace";
+                center.style.color = "#8a958c";
+                center.textContent = "×";
+            }
+
+            const away = document.createElement("strong");
+            away.style.textAlign = "left";
+            away.style.overflowWrap = "anywhere";
+            away.textContent = jogo.visitante || "Visitante";
+
+            teams.append(home, center, away);
+            card.append(meta, teams);
+            fragment.appendChild(card);
+        });
+
+        gamesContainer.appendChild(fragment);
+        message.textContent = "Rodada " + rodada + " · " + data.length + " jogo(s) cadastrado(s). Placar exibido quando disponível no calendário.";
+    }catch(error){
+        console.error("Erro ao consultar rodada:", error);
+        message.textContent = "Não foi possível carregar esta rodada. Verifique a conexão e as permissões de leitura do calendário.";
+    }
 }
 
 function showRankingFromMenu(){
