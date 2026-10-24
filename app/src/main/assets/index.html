@@ -2141,6 +2141,7 @@ RANKING
         <select id="rankingSeasonSelect" onchange="loadRanking()" style="padding:10px 12px;border:1px solid #cbd5e1;border-radius:10px;background:#fff;font-size:15px;color:#171717;">
             <option value="2026" selected>2026</option>
             <option value="2025">2025</option>
+            <option value="teste">Palpites teste</option>
         </select>
     </div>
 
@@ -7334,20 +7335,25 @@ async function loadRanking(){
     const seasonSelect = document.getElementById("rankingSeasonSelect");
     if (!tableBody) return;
 
-    const temporada = Number(seasonSelect?.value || 2026);
+    const selecao = seasonSelect?.value || "2026";
+    const ehTeste = selecao === "teste";
+    const temporada = ehTeste ? null : Number(selecao);
+    const descricao = ehTeste ? "Palpites teste" : `temporada ${temporada}`;
 
-    tableBody.innerHTML = `<tr><td colspan="3" style="text-align:center;padding:15px;color:#666;">Carregando ranking de ${temporada}...</td></tr>`;
+    tableBody.innerHTML = `<tr><td colspan="3" style="text-align:center;padding:15px;color:#666;">Carregando ranking de ${descricao}...</td></tr>`;
 
     try {
-        const { data, error } = await supabaseClient.rpc(
-            "carregar_ranking_temporada",
-            { p_temporada: temporada }
-        );
+        const { data, error } = ehTeste
+            ? await supabaseClient.rpc("carregar_ranking")
+            : await supabaseClient.rpc(
+                "carregar_ranking_temporada",
+                { p_temporada: temporada }
+            );
 
         if (error) throw error;
 
         if (!data || data.length === 0) {
-            tableBody.innerHTML = `<tr><td colspan="3" style="text-align:center;padding:15px;color:#666;">Nenhum participante encontrado no ranking de ${temporada}.</td></tr>`;
+            tableBody.innerHTML = `<tr><td colspan="3" style="text-align:center;padding:15px;color:#666;">Nenhum participante encontrado no ranking de ${descricao}.</td></tr>`;
             return;
         }
 
@@ -7361,7 +7367,7 @@ async function loadRanking(){
 
     } catch (err) {
         console.error("Erro ao carregar ranking:", err);
-        tableBody.innerHTML = `<tr><td colspan="3" style="text-align:center;padding:15px;color:#c62828;">Erro ao carregar o ranking de ${temporada}.</td></tr>`;
+        tableBody.innerHTML = `<tr><td colspan="3" style="text-align:center;padding:15px;color:#c62828;">Erro ao carregar o ranking de ${descricao}.</td></tr>`;
     }
 }
 
