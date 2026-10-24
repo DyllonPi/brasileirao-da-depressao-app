@@ -2154,6 +2154,10 @@ RANKING
                 <tr>
 
                     <th>
+                        Index
+                    </th>
+
+                    <th>
                         Participante
                     </th>
 
@@ -2174,7 +2178,7 @@ RANKING
                 <tr>
 
                     <td
-                        colspan="3"
+                        colspan="4"
                         style="text-align:center;padding:20px;">
 
                         Carregando ranking...
@@ -7340,7 +7344,7 @@ async function loadRanking(){
     const temporada = ehTeste ? null : Number(selecao);
     const descricao = ehTeste ? "Palpites teste" : `temporada ${temporada}`;
 
-    tableBody.innerHTML = `<tr><td colspan="3" style="text-align:center;padding:15px;color:#666;">Carregando ranking de ${descricao}...</td></tr>`;
+    tableBody.innerHTML = `<tr><td colspan="4" style="text-align:center;padding:15px;color:#666;">Carregando ranking de ${descricao}...</td></tr>`;
 
     try {
         const { data, error } = ehTeste
@@ -7353,12 +7357,13 @@ async function loadRanking(){
         if (error) throw error;
 
         if (!data || data.length === 0) {
-            tableBody.innerHTML = `<tr><td colspan="3" style="text-align:center;padding:15px;color:#666;">Nenhum participante encontrado no ranking de ${descricao}.</td></tr>`;
+            tableBody.innerHTML = `<tr><td colspan="4" style="text-align:center;padding:15px;color:#666;">Nenhum participante encontrado no ranking de ${descricao}.</td></tr>`;
             return;
         }
 
-        tableBody.innerHTML = data.map(item => `
+        tableBody.innerHTML = data.map((item, index) => `
             <tr>
+                <td class="col-index">${index + 1}º</td>
                 <td class="col-participante">${item.participante || "Usuário"}</td>
                 <td class="col-pontuacao">${Number(item.pontos) || 0}</td>
                 <td class="col-time">${item.clube || "-"}</td>
@@ -7367,7 +7372,7 @@ async function loadRanking(){
 
     } catch (err) {
         console.error("Erro ao carregar ranking:", err);
-        tableBody.innerHTML = `<tr><td colspan="3" style="text-align:center;padding:15px;color:#c62828;">Erro ao carregar o ranking de ${descricao}.</td></tr>`;
+        tableBody.innerHTML = `<tr><td colspan="4" style="text-align:center;padding:15px;color:#c62828;">Erro ao carregar o ranking de ${descricao}.</td></tr>`;
     }
 }
 
