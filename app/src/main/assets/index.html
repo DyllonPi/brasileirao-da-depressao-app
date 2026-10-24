@@ -2136,6 +2136,14 @@ RANKING
 
     </div>
 
+    <div style="display:flex;justify-content:center;align-items:center;gap:10px;margin:0 0 16px;">
+        <label for="rankingSeasonSelect" style="font-weight:700;color:#254aa5;">Temporada:</label>
+        <select id="rankingSeasonSelect" onchange="loadRanking()" style="padding:10px 12px;border:1px solid #cbd5e1;border-radius:10px;background:#fff;font-size:15px;color:#171717;">
+            <option value="2026" selected>2026</option>
+            <option value="2025">2025</option>
+        </select>
+    </div>
+
     <div class="ranking-table-container">
 
         <table class="ranking-table">
@@ -7323,58 +7331,37 @@ RANKING
 async function loadRanking(){
 
     const tableBody = document.getElementById("rankingTableBody");
-
+    const seasonSelect = document.getElementById("rankingSeasonSelect");
     if (!tableBody) return;
 
-    tableBody.innerHTML = `
-        <tr>
-            <td colspan="3" style="text-align:center;padding:15px;color:#666;">
-                Carregando ranking...
-            </td>
-        </tr>
-    `;
+    const temporada = Number(seasonSelect?.value || 2026);
+
+    tableBody.innerHTML = `<tr><td colspan="3" style="text-align:center;padding:15px;color:#666;">Carregando ranking de ${temporada}...</td></tr>`;
 
     try {
-        const { data, error } =
-            await supabaseClient.rpc("carregar_ranking");
+        const { data, error } = await supabaseClient.rpc(
+            "carregar_ranking_temporada",
+            { p_temporada: temporada }
+        );
 
         if (error) throw error;
 
         if (!data || data.length === 0) {
-            tableBody.innerHTML = `
-                <tr>
-                    <td colspan="3" style="text-align:center;padding:15px;color:#666;">
-                        Nenhum participante encontrado no ranking.
-                    </td>
-                </tr>
-            `;
+            tableBody.innerHTML = `<tr><td colspan="3" style="text-align:center;padding:15px;color:#666;">Nenhum participante encontrado no ranking de ${temporada}.</td></tr>`;
             return;
         }
 
         tableBody.innerHTML = data.map(item => `
             <tr>
-                <td class="col-participante">
-                    ${item.participante || "Usuário"}
-                </td>
-                <td class="col-pontuacao">
-                    ${Number(item.pontos) || 0}
-                </td>
-                <td class="col-time">
-                    ${item.clube || "-"}
-                </td>
+                <td class="col-participante">${item.participante || "Usuário"}</td>
+                <td class="col-pontuacao">${Number(item.pontos) || 0}</td>
+                <td class="col-time">${item.clube || "-"}</td>
             </tr>
         `).join("");
 
     } catch (err) {
         console.error("Erro ao carregar ranking:", err);
-
-        tableBody.innerHTML = `
-            <tr>
-                <td colspan="3" style="text-align:center;padding:15px;color:#c62828;">
-                    Erro ao carregar o ranking.
-                </td>
-            </tr>
-        `;
+        tableBody.innerHTML = `<tr><td colspan="3" style="text-align:center;padding:15px;color:#c62828;">Erro ao carregar o ranking de ${temporada}.</td></tr>`;
     }
 }
 
