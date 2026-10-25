@@ -2718,6 +2718,50 @@ function showRoundsFromMenu(){
         });
     }
 
+    selecionarRodadaEmAndamento();
+}
+
+async function selecionarRodadaEmAndamento(){
+
+    const select = document.getElementById("consultRoundSelect");
+
+    if(!select){
+        return;
+    }
+
+    try{
+        const {data, error} = await supabaseClient
+            .from("calendario_brasileirao")
+            .select("rodada,status")
+            .eq("temporada", 2026);
+
+        if(error){
+            throw error;
+        }
+
+        const statusEmAndamento = new Set([
+            "em andamento",
+            "intervalo"
+        ]);
+
+        const jogoAoVivo = (data || []).find(jogo => {
+            const status = traduzirStatusJogo(jogo.status)
+                .normalize("NFD")
+                .replace(/[\\u0300-\\u036f]/g, "")
+                .toLowerCase()
+                .trim();
+
+            return statusEmAndamento.has(status);
+        });
+
+        if(jogoAoVivo && Number(jogoAoVivo.rodada) >= 1 && Number(jogoAoVivo.rodada) <= 38){
+            select.value = String(Number(jogoAoVivo.rodada));
+        }
+
+    }catch(error){
+        console.error("Não foi possível identificar a rodada com jogos em andamento:", error);
+    }
+
     loadConsultationRound();
 }
 
