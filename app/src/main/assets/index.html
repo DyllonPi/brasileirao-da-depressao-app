@@ -2739,23 +2739,39 @@ async function selecionarRodadaEmAndamento(){
             throw error;
         }
 
-        const statusEmAndamento = new Set([
-            "em andamento",
-            "intervalo"
+        const statusAoVivo = new Set([
+            "em andamento", "intervalo", "ao vivo", "em jogo",
+            "1h", "2h", "ht", "live", "in play", "playing",
+            "first half", "second half", "half time", "halftime",
+            "in progress", "inprogress"
         ]);
 
-        const jogoAoVivo = (data || []).find(jogo => {
-            const status = traduzirStatusJogo(jogo.status)
-                .normalize("NFD")
-                .replace(/[\u0300-\u036f]/g, "")
-                .toLowerCase()
-                .trim();
+        const normalizarStatus = valor => String(valor || "")
+            .normalize("NFD")
+            .replace(/[\\u0300-\\u036f]/g, "")
+            .toLowerCase()
+            .replace(/[_-]+/g, " ")
+            .replace(/\\s+/g, " ")
+            .trim();
 
-            return statusEmAndamento.has(status);
+        const jogoAoVivo = (data || []).find(jogo => {
+            const original = normalizarStatus(jogo.status);
+            const traduzido = normalizarStatus(traduzirStatusJogo(jogo.status));
+
+            return statusAoVivo.has(original)
+                || statusAoVivo.has(traduzido)
+                || original.includes("in progress")
+                || original.includes("ao vivo")
+                || original.includes("em andamento");
         });
 
         if(jogoAoVivo && Number(jogoAoVivo.rodada) >= 1 && Number(jogoAoVivo.rodada) <= 38){
             select.value = String(Number(jogoAoVivo.rodada));
+        }else{
+            console.info("Nenhum jogo em andamento encontrado na temporada 2026.", {
+                jogosConsultados: (data || []).length,
+                statusEncontrados: [...new Set((data || []).map(jogo => String(jogo.status || "(sem status)")))]
+            });
         }
 
     }catch(error){
@@ -2764,7 +2780,6 @@ async function selecionarRodadaEmAndamento(){
 
     loadConsultationRound();
 }
-
 function traduzirStatusJogo(status){
 
     if(!status){
