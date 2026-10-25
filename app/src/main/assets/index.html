@@ -2724,58 +2724,60 @@ function showRoundsFromMenu(){
 async function selecionarRodadaEmAndamento(){
 
     const select = document.getElementById("consultRoundSelect");
-
-    if(!select){
-        return;
-    }
+    if(!select) return;
 
     try{
         const {data, error} = await supabaseClient
             .from("calendario_brasileirao")
-            .select("rodada,status")
-            .eq("temporada", 2026);
+            .select("rodada,status,data_prevista,hora_prevista,resultado_mandante,resultado_visitante")
+            .eq("temporada", 2026)
+            .order("data_prevista", {ascending:true, nullsFirst:false});
 
-        if(error){
-            throw error;
+        if(error) throw error;
+
+        const jogos = data || [];
+        const hoje = new Date();
+        hoje.setHours(0,0,0,0);
+        const hojeISO = hoje.getFullYear() + "-"
+            + String(hoje.getMonth()+1).padStart(2,"0") + "-"
+            + String(hoje.getDate()).padStart(2,"0");
+
+        const validos = jogos.filter(j => Number(j.rodada) >= 1 && Number(j.rodada) <= 38);
+        const datasHoje = validos.filter(j => j.data_prevista === hojeISO);
+        let rodadaAtual = null;
+
+        // Primeiro: rodada com partidas marcadas para hoje.
+        if(datasHoje.length){
+            rodadaAtual = Number(datasHoje[0].rodada);
+        }else{
+            // Segundo: próxima rodada com jogo ainda não concluído, pela data.
+            const pendentes = validos.filter(j => {
+                const status = String(j.status || "").trim().toLowerCase();
+                const finalizado = ["finished","full time","fulltime","ft","finalizado","encerrado","after extra time","after penalties"].includes(status);
+                return !finalizado && j.data_prevista && j.data_prevista >= hojeISO;
+            });
+            if(pendentes.length){
+                const proximo = pendentes.sort((a,b) =>
+                    String(a.data_prevista).localeCompare(String(b.data_prevista))
+                )[0];
+                rodadaAtual = Number(proximo.rodada);
+            }else{
+                // Se a temporada já não tem jogos futuros, usar a rodada mais recente
+                // que ainda não esteja totalmente finalizada.
+                const rodadas = [...new Set(validos.map(j => Number(j.rodada)))].sort((a,b)=>b-a);
+                rodadaAtual = rodadas.find(r => validos.some(j =>
+                    Number(j.rodada) === r &&
+                    !["finished","full time","fulltime","ft","finalizado","encerrado","after extra time","after penalties"].includes(String(j.status || "").trim().toLowerCase())
+                )) || rodadas[0] || null;
+            }
         }
 
-        const statusAoVivo = new Set([
-            "em andamento", "intervalo", "ao vivo", "em jogo",
-            "1h", "2h", "ht", "live", "in play", "playing",
-            "first half", "second half", "half time", "halftime",
-            "in progress", "inprogress"
-        ]);
-
-        const normalizarStatus = valor => String(valor || "")
-            .normalize("NFD")
-            .replace(/[\\u0300-\\u036f]/g, "")
-            .toLowerCase()
-            .replace(/[_-]+/g, " ")
-            .replace(/\\s+/g, " ")
-            .trim();
-
-        const jogoAoVivo = (data || []).find(jogo => {
-            const original = normalizarStatus(jogo.status);
-            const traduzido = normalizarStatus(traduzirStatusJogo(jogo.status));
-
-            return statusAoVivo.has(original)
-                || statusAoVivo.has(traduzido)
-                || original.includes("in progress")
-                || original.includes("ao vivo")
-                || original.includes("em andamento");
-        });
-
-        if(jogoAoVivo && Number(jogoAoVivo.rodada) >= 1 && Number(jogoAoVivo.rodada) <= 38){
-            select.value = String(Number(jogoAoVivo.rodada));
-        }else{
-            console.info("Nenhum jogo em andamento encontrado na temporada 2026.", {
-                jogosConsultados: (data || []).length,
-                statusEncontrados: [...new Set((data || []).map(jogo => String(jogo.status || "(sem status)")))]
-            });
+        if(rodadaAtual && select.querySelector('option[value="' + rodadaAtual + '"]')){
+            select.value = String(rodadaAtual);
         }
 
     }catch(error){
-        console.error("Não foi possível identificar a rodada com jogos em andamento:", error);
+        console.error("Não foi possível identificar a rodada atual:", error);
     }
 
     loadConsultationRound();
@@ -2802,6 +2804,17 @@ function traduzirStatusJogo(status){
         "timed":"Agendado",
         "in progress":"Em andamento",
         "inprogress":"Em andamento",
+        "in play":"Em andamento",
+        "in_play":"Em andamento",
+        "playing":"Em andamento",
+        "live":"Em andamento",
+        "1h":"Em andamento",
+        "2h":"Em andamento",
+        "ht":"Intervalo",
+        "first half":"Em andamento",
+        "second half":"Em andamento",
+        "not started":"Agendado",
+        "not_started":"Agendado",
         "live":"Em andamento",
         "1st half":"Em andamento",
         "half time":"Intervalo",
