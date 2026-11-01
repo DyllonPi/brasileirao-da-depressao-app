@@ -2191,7 +2191,18 @@ CONSULTAR RODADAS — SOMENTE LEITURA
         </div>
     </div>
 
-    <div style="margin:0 0 18px;">
+    <div id="consultViewTabs" style="display:flex;gap:10px;margin:0 0 20px;">
+        <button type="button" id="consultGamesTab" onclick="switchConsultationView('games')" aria-pressed="true"
+            style="flex:1;padding:12px;border:0;border-radius:10px;background:#254aa5;color:#fff;font-weight:800;cursor:pointer;">
+            ⚽ Jogos e resultados
+        </button>
+        <button type="button" id="consultTableTab" onclick="switchConsultationView('table')" aria-pressed="false"
+            style="flex:1;padding:12px;border:1px solid #cbd5e1;border-radius:10px;background:#fff;color:#254aa5;font-weight:800;cursor:pointer;">
+            🏆 Classificação
+        </button>
+    </div>
+
+    <div id="consultRoundControls" style="margin:0 0 18px;">
         <label for="consultRoundSelect" style="display:block;margin-bottom:8px;font-weight:700;color:#254aa5;">Selecione a rodada</label>
         <select
             id="consultRoundSelect"
@@ -2203,6 +2214,8 @@ CONSULTAR RODADAS — SOMENTE LEITURA
 
     <p id="consultRoundMessage" role="status" style="font-size:13px;color:#667169;line-height:1.5;">Selecione uma rodada para consultar os jogos e resultados.</p>
     <div id="consultRoundGames" aria-live="polite"></div>
+    <div id="consultStandingsMessage" role="status" style="display:none;font-size:13px;color:#667169;line-height:1.5;margin:12px 0;">Carregando classificação da temporada 2026...</div>
+    <div id="consultStandingsContainer" aria-live="polite" style="display:none;"></div>
 
 </section>
 
@@ -2957,6 +2970,156 @@ function criarEscudoTime(nome){
     }
 
     return img;
+}
+
+function switchConsultationView(view){
+    const gamesView = view === "games";
+    const controls = document.getElementById("consultRoundControls");
+    const roundMessage = document.getElementById("consultRoundMessage");
+    const games = document.getElementById("consultRoundGames");
+    const standingsMessage = document.getElementById("consultStandingsMessage");
+    const standings = document.getElementById("consultStandingsContainer");
+    const gamesTab = document.getElementById("consultGamesTab");
+    const tableTab = document.getElementById("consultTableTab");
+
+    if(controls) controls.style.display = gamesView ? "block" : "none";
+    if(roundMessage) roundMessage.style.display = gamesView ? "block" : "none";
+    if(games) games.style.display = gamesView ? "block" : "none";
+    if(standingsMessage) standingsMessage.style.display = gamesView ? "none" : "block";
+    if(standings) standings.style.display = gamesView ? "none" : "block";
+
+    if(gamesTab){
+        gamesTab.setAttribute("aria-pressed", String(gamesView));
+        gamesTab.style.background = gamesView ? "#254aa5" : "#fff";
+        gamesTab.style.color = gamesView ? "#fff" : "#254aa5";
+        gamesTab.style.border = gamesView ? "0" : "1px solid #cbd5e1";
+    }
+    if(tableTab){
+        tableTab.setAttribute("aria-pressed", String(!gamesView));
+        tableTab.style.background = gamesView ? "#fff" : "#254aa5";
+        tableTab.style.color = gamesView ? "#254aa5" : "#fff";
+        tableTab.style.border = gamesView ? "1px solid #cbd5e1" : "0";
+    }
+
+    if(!gamesView && standings && standings.dataset.loaded !== "true"){
+        loadConsultationStandings();
+    }
+}
+
+async function loadConsultationStandings(){
+    const message = document.getElementById("consultStandingsMessage");
+    const container = document.getElementById("consultStandingsContainer");
+    if(!message || !container) return;
+
+    message.textContent = "Calculando classificação da temporada 2026...";
+    message.style.display = "block";
+    container.replaceChildren();
+
+    try{
+        const {data, error} = await supabaseClient
+            .from("calendario_brasileirao")
+            .select("mandante,visitante,status,resultado_mandante,resultado_visitante")
+            .eq("temporada", 2026);
+
+        if(error) throw error;
+        if(!data || data.length === 0){
+            throw new Error("Não há jogos cadastrados para a temporada 2026.");
+        }
+
+        const tabela = new Map();
+        const normalizarStatus = value => String(value || "").trim().toLowerCase()
+            .normalize("NFD").replace(/[\\u0300-\\u036f]/g,"").replace(/[_-]+/g," ");
+        const finalizados = new Set(["finished","full time","fulltime","ft","finalizado","encerrado","after extra time","after penalties"]);
+
+        function obterTime(nome){
+            const chave = String(nome || "").trim();
+            if(!chave) return null;
+            if(!tabela.has(chave)){
+                tabela.set(chave,{time:chave,p:0,j:0,v:0,e:0,d:0,gp:0,gc:0});
+            }
+            return tabela.get(chave);
+        }
+
+        data.forEach(jogo => {
+            const mandante = obterTime(jogo.mandante);
+            const visitante = obterTime(jogo.visitante);
+            if(!mandante || !visitante) return;
+
+            const status = normalizarStatus(jogo.status);
+            const golsCasa = jogo.resultado_mandante;
+            const golsFora = jogo.resultado_visitante;
+            const temPlacar = golsCasa !== null && golsCasa !== undefined && golsFora !== null && golsFora !== undefined
+                && Number.isFinite(Number(golsCasa)) && Number.isFinite(Number(golsFora));
+            if(!temPlacar || (!finalizados.has(status) && !status.includes("finaliz") && !status.includes("encerr"))) return;
+
+            const gc = Number(golsCasa);
+            const gf = Number(golsFora);
+            mandante.j++; visitante.j++;
+            mandante.gp += gc; mandante.gc += gf;
+            visitante.gp += gf; visitante.gc += gc;
+
+            if(gc > gf){ mandante.v++; mandante.p += 3; visitante.d++; }
+            else if(gc < gf){ visitante.v++; visitante.p += 3; mandante.d++; }
+            else { mandante.e++; visitante.e++; mandante.p++; visitante.p++; }
+        });
+
+        const linhas = [...tabela.values()].map(t => ({
+            ...t, sg:t.gp-t.gc, aproveitamento:t.j ? Math.round((t.p/(t.j*3))*100) : 0
+        })).sort((a,b)=>b.p-a.p || b.v-a.v || b.sg-a.sg || b.gp-a.gp || a.time.localeCompare(b.time,"pt-BR"));
+
+        if(!linhas.length) throw new Error("Ainda não há resultados finalizados para calcular a classificação.");
+
+        const wrapper = document.createElement("div");
+        wrapper.style.cssText = "background:#fff;border:1px solid #d8e1f0;border-radius:16px;overflow:hidden;box-shadow:0 8px 24px rgba(18,43,83,.07);";
+        const title = document.createElement("div");
+        title.style.cssText = "padding:18px 16px;background:linear-gradient(100deg,#081a35,#17448d);color:#fff;border-bottom:4px solid #ffd629;";
+        title.innerHTML = '<div style="font-size:11px;font-weight:800;letter-spacing:1.5px;color:#ffd629;">BRASILEIRÃO 2026</div><strong style="font-size:20px;">Classificação atual</strong><div style="font-size:11px;opacity:.8;margin-top:5px;">Atualizada com os resultados cadastrados no aplicativo</div>';
+        wrapper.appendChild(title);
+
+        const scroll = document.createElement("div");
+        scroll.style.cssText = "overflow-x:auto;";
+        const table = document.createElement("table");
+        table.style.cssText = "width:100%;min-width:520px;border-collapse:collapse;font-size:12px;text-align:center;";
+        const thead = document.createElement("thead");
+        thead.innerHTML = '<tr style="background:#eef3fb;color:#33445f;"><th style="padding:12px 8px;">#</th><th style="padding:12px 8px;text-align:left;">CLUBE</th><th style="padding:12px 8px;">PTS</th><th style="padding:12px 8px;">J</th><th style="padding:12px 8px;">V</th><th style="padding:12px 8px;">E</th><th style="padding:12px 8px;">D</th><th style="padding:12px 8px;">SG</th></tr>';
+        table.appendChild(thead);
+        const tbody = document.createElement("tbody");
+
+        linhas.forEach((time,index)=>{
+            const tr = document.createElement("tr");
+            tr.style.cssText = "border-top:1px solid #e8edf5;background:"+(index%2 ? "#f5f8fd" : "#fff")+";";
+            const pos = document.createElement("td");
+            pos.textContent = String(index+1);
+            pos.style.cssText = "padding:12px 8px;font-weight:900;color:"+(index<4 ? "#16834a" : index>=linhas.length-4 ? "#c0392b" : "#53627a")+";";
+            tr.appendChild(pos);
+            const club = document.createElement("td");
+            club.textContent = time.time;
+            club.style.cssText = "padding:12px 8px;text-align:left;font-weight:800;color:#15233b;white-space:nowrap;";
+            tr.appendChild(club);
+            [time.p,time.j,time.v,time.e,time.d,time.sg>0 ? "+"+time.sg : time.sg].forEach((value,i)=>{
+                const td = document.createElement("td");
+                td.textContent = String(value);
+                td.style.cssText = "padding:12px 8px;"+(i===0 ? "font-weight:900;color:#1749b5;" : "");
+                tr.appendChild(td);
+            });
+            tbody.appendChild(tr);
+        });
+        table.appendChild(tbody);
+        scroll.appendChild(table);
+        wrapper.appendChild(scroll);
+        container.appendChild(wrapper);
+
+        const note = document.createElement("p");
+        note.textContent = "Classificação calculada a partir dos jogos finalizados e placares registrados em calendario_brasileirao. Critérios: pontos, vitórias, saldo de gols e gols pró.";
+        note.style.cssText = "font-size:11px;line-height:1.5;color:#68778d;margin:12px 2px;";
+        container.appendChild(note);
+        message.style.display = "none";
+        container.dataset.loaded = "true";
+    }catch(error){
+        console.error("Erro ao carregar classificação do Brasileirão:",error);
+        message.textContent = error && error.message ? error.message : "Não foi possível carregar a classificação.";
+        container.dataset.loaded = "false";
+    }
 }
 
 async function loadConsultationRound(){
