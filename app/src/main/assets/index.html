@@ -1384,6 +1384,17 @@ MENU LATERAL
 
         <button
             type="button"
+            id="navTable"
+            class="side-menu-item"
+            onclick="showTableFromMenu()">
+
+            <span class="menu-icon">🏆</span>
+            <span>Tabela do Brasileirão</span>
+
+        </button>
+
+        <button
+            type="button"
             id="navRanking"
             class="side-menu-item"
             onclick="showRankingFromMenu()">
@@ -2149,6 +2160,68 @@ CONSULTAR RODADAS — SOMENTE LEITURA
 
 
 <!-- ============================================================
+TABELA DO BRASILEIRÃO — CLASSIFICAÇÃO 2026
+============================================================ -->
+
+<section
+    id="tableScreen"
+    style="display:none;padding:0 16px 44px;">
+
+    <div style="display:flex;align-items:center;justify-content:center;position:relative;margin-bottom:20px;">
+        <button
+            type="button"
+            onclick="showHomeFromMenu()"
+            aria-label="Voltar para tela inicial"
+            style="position:absolute;left:0;border:0;background:#254aa5;color:#fff;border-radius:10px;padding:10px 14px;font-size:20px;cursor:pointer;">
+            ←
+        </button>
+
+        <div style="text-align:center;">
+            <div class="eyebrow" style="color:#254aa5;margin-bottom:2px;">TEMPORADA 2026</div>
+            <h1 style="margin:0;font-size:26px;">Tabela do Brasileirão</h1>
+        </div>
+    </div>
+
+    <p style="margin:0 0 14px;color:#64748b;font-size:13px;line-height:1.5;text-align:center;">
+        Classificação calculada com base nos jogos finalizados cadastrados no calendário do aplicativo.
+    </p>
+
+    <div id="tableStandingsMessage" role="status" style="font-size:13px;color:#667169;line-height:1.5;margin:12px 0;">
+        Carregando classificação da temporada 2026...
+    </div>
+
+    <div class="ranking-table-container" style="margin-top:12px;">
+        <table class="ranking-table" style="min-width:560px;">
+            <thead>
+                <tr>
+                    <th>Pos.</th>
+                    <th style="text-align:left;">Clube</th>
+                    <th>PTS</th>
+                    <th>J</th>
+                    <th>V</th>
+                    <th>E</th>
+                    <th>D</th>
+                    <th>SG</th>
+                </tr>
+            </thead>
+            <tbody id="tableStandingsBody">
+                <tr><td colspan="8" style="text-align:center;padding:20px;">Aguardando dados...</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <p style="margin:10px 0 0;color:#94a3b8;font-size:11px;line-height:1.4;">
+        PTS: pontos · J: jogos · V: vitórias · E: empates · D: derrotas · SG: saldo de gols.
+    </p>
+
+    <button type="button" onclick="loadBrazilianLeagueTable()" style="display:block;margin:16px auto 0;border:1px solid #254aa5;border-radius:9px;padding:10px 16px;background:#fff;color:#254aa5;font-weight:700;cursor:pointer;">
+        Atualizar classificação
+    </button>
+
+</section>
+
+
+<!-- ============================================================
 RANKING
 ============================================================ -->
 
@@ -2651,6 +2724,9 @@ function hideAllScreens(){
     const rounds =
         document.getElementById("roundsScreen");
 
+    const table =
+        document.getElementById("tableScreen");
+
     const receipts =
         document.getElementById("receiptsScreen");
 
@@ -2667,6 +2743,10 @@ function hideAllScreens(){
 
     if(rounds){
         rounds.style.display = "none";
+    }
+
+    if(table){
+        table.style.display = "none";
     }
 
     if(receipts){
@@ -3049,6 +3129,197 @@ async function loadConsultationRound(){
         message.textContent = "Não foi possível carregar esta rodada. Verifique a conexão e as permissões de leitura do calendário.";
     }
 }
+
+async function showTableFromMenu(){
+
+    closeSideMenu();
+    hideAllScreens();
+    updateActiveMenuItem("navTable");
+
+    const screen = document.getElementById("tableScreen");
+    if(screen){
+        screen.style.display = "block";
+        screen.scrollIntoView({
+            behavior:"smooth",
+            block:"start"
+        });
+    }
+
+    await loadBrazilianLeagueTable();
+}
+
+
+async function loadBrazilianLeagueTable(){
+
+    const message = document.getElementById("tableStandingsMessage");
+    const tbody = document.getElementById("tableStandingsBody");
+
+    if(!message || !tbody) return;
+
+    message.textContent = "Carregando classificação da temporada 2026...";
+    tbody.replaceChildren();
+
+    try{
+        const {data, error} = await supabaseClient
+            .from("calendario_brasileirao")
+            .select("mandante,visitante,status,resultado_mandante,resultado_visitante")
+            .eq("temporada", 2026);
+
+        if(error) throw error;
+
+        const jogos = data || [];
+        const statusFinalizados = [
+            "finished",
+            "full time",
+            "fulltime",
+            "ft",
+            "finalizado",
+            "encerrado",
+            "after extra time",
+            "after penalties"
+        ];
+
+        const clubes = new Map();
+        const obterClube = nome => {
+            const nomeOriginal = String(nome || "").trim();
+            if(!nomeOriginal) return null;
+
+            const chave = nomeOriginal
+                .normalize("NFD")
+                .replace(/[\u0300-\u036f]/g, "")
+                .toLowerCase()
+                .replace(/\s+/g, " ");
+
+            if(!clubes.has(chave)){
+                clubes.set(chave, {
+                    nome:nomeOriginal,
+                    pontos:0,
+                    jogos:0,
+                    vitorias:0,
+                    empates:0,
+                    derrotas:0,
+                    golsPro:0,
+                    golsContra:0
+                });
+            }
+
+            return clubes.get(chave);
+        };
+
+        let partidasComputadas = 0;
+
+        jogos.forEach(jogo => {
+            const status = String(jogo.status || "").trim().toLowerCase();
+            const golsMandante = Number(jogo.resultado_mandante);
+            const golsVisitante = Number(jogo.resultado_visitante);
+
+            if(
+                !statusFinalizados.includes(status) ||
+                !Number.isInteger(golsMandante) ||
+                !Number.isInteger(golsVisitante) ||
+                golsMandante < 0 ||
+                golsVisitante < 0
+            ){
+                return;
+            }
+
+            const mandante = obterClube(jogo.mandante);
+            const visitante = obterClube(jogo.visitante);
+
+            if(!mandante || !visitante) return;
+
+            mandante.jogos++;
+            visitante.jogos++;
+            mandante.golsPro += golsMandante;
+            mandante.golsContra += golsVisitante;
+            visitante.golsPro += golsVisitante;
+            visitante.golsContra += golsMandante;
+
+            if(golsMandante > golsVisitante){
+                mandante.vitorias++;
+                mandante.pontos += 3;
+                visitante.derrotas++;
+            }else if(golsMandante < golsVisitante){
+                visitante.vitorias++;
+                visitante.pontos += 3;
+                mandante.derrotas++;
+            }else{
+                mandante.empates++;
+                visitante.empates++;
+                mandante.pontos++;
+                visitante.pontos++;
+            }
+
+            partidasComputadas++;
+        });
+
+        const classificacao = Array.from(clubes.values()).sort((a,b) =>
+            b.pontos - a.pontos ||
+            b.vitorias - a.vitorias ||
+            (b.golsPro - b.golsContra) - (a.golsPro - a.golsContra) ||
+            b.golsPro - a.golsPro ||
+            a.nome.localeCompare(b.nome, "pt-BR")
+        );
+
+        if(classificacao.length === 0){
+            message.textContent = jogos.length
+                ? "Ainda não há jogos finalizados com placares válidos para montar a classificação."
+                : "Nenhum jogo encontrado para a temporada 2026.";
+            tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:20px;">Sem dados de classificação.</td></tr>';
+            return;
+        }
+
+        const fragment = document.createDocumentFragment();
+
+        classificacao.forEach((clube, indice) => {
+            const tr = document.createElement("tr");
+            const pos = document.createElement("td");
+            pos.textContent = indice + 1;
+            pos.style.textAlign = "center";
+            pos.style.fontWeight = "700";
+
+            const nome = document.createElement("td");
+            nome.textContent = clube.nome;
+            nome.className = "col-participante";
+
+            const valores = [
+                clube.pontos,
+                clube.jogos,
+                clube.vitorias,
+                clube.empates,
+                clube.derrotas,
+                clube.golsPro - clube.golsContra
+            ];
+
+            tr.appendChild(pos);
+            tr.appendChild(nome);
+
+            valores.forEach((valor, i) => {
+                const td = document.createElement("td");
+                td.textContent = valor;
+                td.style.textAlign = "center";
+                if(i === 0){
+                    td.style.fontWeight = "700";
+                    td.style.color = "#254aa5";
+                }
+                tr.appendChild(td);
+            });
+
+            fragment.appendChild(tr);
+        });
+
+        tbody.appendChild(fragment);
+        message.textContent =
+            "Classificação parcial de 2026 · " +
+            classificacao.length + " clubes · " +
+            partidasComputadas + " jogos finalizados computados.";
+    }catch(error){
+        console.error("Erro ao carregar Tabela do Brasileirão:", error);
+        message.textContent = "Não foi possível carregar a classificação. Verifique a conexão e as permissões de leitura do calendário.";
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:20px;">Erro ao carregar os dados.</td></tr>';
+    }
+}
+
 
 function showRankingFromMenu(){
 
