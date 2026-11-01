@@ -1338,7 +1338,7 @@ html,body{background:var(--bd-paper)!important;color:var(--bd-ink)!important;fon
 body{background-image:radial-gradient(circle at 10% 5%,rgba(36,85,195,.09),transparent 28%),radial-gradient(circle at 95% 30%,rgba(255,214,41,.11),transparent 22%)!important}
 .top{height:76px!important;padding:0 22px 0 72px!important;background:#fff!important;border-bottom:1px solid #dce4f1!important;box-shadow:0 6px 22px rgba(8,26,53,.08)!important}
 .mark{width:42px!important;height:42px!important;border-radius:13px!important;background:var(--bd-yellow)!important;color:var(--bd-navy)!important;font-size:26px!important;box-shadow:0 4px 0 rgba(8,26,53,.12)!important}
-#homeScreen,#rankingScreen,#receiptsScreen,#settingsScreen,#roundsScreen{max-width:1120px!important;margin-left:auto!important;margin-right:auto!important}
+#homeScreen,#rankingScreen,#receiptsScreen,#settingsScreen,#roundsScreen,#tableScreen{max-width:1120px!important;margin-left:auto!important;margin-right:auto!important}
 .hero{max-width:1060px!important;margin:28px auto 34px!important;padding:clamp(30px,5vw,58px)!important;border:0!important;border-bottom:8px solid var(--bd-yellow)!important;border-radius:26px!important;background:linear-gradient(125deg,#07172e 0%,#123c82 55%,#2863d7 100%)!important;color:#fff!important;box-shadow:0 18px 40px rgba(8,26,53,.24)!important}
 .hero:after{right:8px!important;bottom:-68px!important;font-size:clamp(150px,25vw,250px)!important;color:rgba(255,255,255,.09)!important}
 .hero h1{font-family:Inter,Arial,sans-serif!important;font-size:clamp(38px,6vw,64px)!important;line-height:.98!important;letter-spacing:-2px!important;max-width:700px!important;text-transform:uppercase!important}
@@ -1439,6 +1439,15 @@ MENU LATERAL
             <span class="menu-icon">📅</span>
             <span>Consultar rodadas</span>
 
+        </button>
+
+        <button
+            type="button"
+            id="navTable"
+            class="side-menu-item"
+            onclick="showTableFromMenu()">
+            <span class="menu-icon">🏆</span>
+            <span>Tabela do Brasileirão</span>
         </button>
 
         <button
@@ -2191,17 +2200,6 @@ CONSULTAR RODADAS — SOMENTE LEITURA
         </div>
     </div>
 
-    <div id="consultViewTabs" style="display:flex;gap:10px;margin:0 0 20px;">
-        <button type="button" id="consultGamesTab" onclick="switchConsultationView('games')" aria-pressed="true"
-            style="flex:1;padding:12px;border:0;border-radius:10px;background:#254aa5;color:#fff;font-weight:800;cursor:pointer;">
-            ⚽ Jogos e resultados
-        </button>
-        <button type="button" id="consultTableTab" onclick="switchConsultationView('table')" aria-pressed="false"
-            style="flex:1;padding:12px;border:1px solid #cbd5e1;border-radius:10px;background:#fff;color:#254aa5;font-weight:800;cursor:pointer;">
-            🏆 Classificação
-        </button>
-    </div>
-
     <div id="consultRoundControls" style="margin:0 0 18px;">
         <label for="consultRoundSelect" style="display:block;margin-bottom:8px;font-weight:700;color:#254aa5;">Selecione a rodada</label>
         <select
@@ -2214,9 +2212,26 @@ CONSULTAR RODADAS — SOMENTE LEITURA
 
     <p id="consultRoundMessage" role="status" style="font-size:13px;color:#667169;line-height:1.5;">Selecione uma rodada para consultar os jogos e resultados.</p>
     <div id="consultRoundGames" aria-live="polite"></div>
-    <div id="consultStandingsMessage" role="status" style="display:none;font-size:13px;color:#667169;line-height:1.5;margin:12px 0;">Carregando classificação da temporada 2026...</div>
-    <div id="consultStandingsContainer" aria-live="polite" style="display:none;"></div>
 
+</section>
+
+<!-- ============================================================
+TABELA DO BRASILEIRÃO
+============================================================ -->
+<section id="tableScreen" style="display:none;padding:0 16px 44px;">
+    <div style="display:flex;align-items:center;justify-content:center;position:relative;margin-bottom:20px;">
+        <button type="button" onclick="showHomeFromMenu()" aria-label="Voltar para tela inicial"
+            style="position:absolute;left:0;border:0;background:#254aa5;color:#fff;border-radius:10px;padding:10px 14px;font-size:20px;cursor:pointer;">←</button>
+        <div style="text-align:center;">
+            <div class="eyebrow" style="color:#254aa5;margin-bottom:2px;">TEMPORADA 2026</div>
+            <h1 style="margin:0;font-size:26px;">Tabela do Brasileirão</h1>
+        </div>
+    </div>
+    <p style="margin:0 0 14px;color:#64748b;font-size:13px;line-height:1.5;text-align:center;">
+        Classificação calculada com os jogos finalizados e resultados cadastrados no aplicativo.
+    </p>
+    <div id="consultStandingsMessage" role="status" style="font-size:13px;color:#667169;line-height:1.5;margin:12px 0;">Carregando classificação da temporada 2026...</div>
+    <div id="consultStandingsContainer" aria-live="polite"></div>
 </section>
 
 
@@ -2723,6 +2738,9 @@ function hideAllScreens(){
     const rounds =
         document.getElementById("roundsScreen");
 
+    const table =
+        document.getElementById("tableScreen");
+
     const receipts =
         document.getElementById("receiptsScreen");
 
@@ -2739,6 +2757,10 @@ function hideAllScreens(){
 
     if(rounds){
         rounds.style.display = "none";
+    }
+
+    if(table){
+        table.style.display = "none";
     }
 
     if(receipts){
@@ -3270,6 +3292,22 @@ async function loadConsultationRound(){
         console.error("Erro ao consultar rodada:", error);
         message.textContent = "Não foi possível carregar esta rodada. Verifique a conexão e as permissões de leitura do calendário.";
     }
+}
+
+function showTableFromMenu(){
+    closeSideMenu();
+    hideAllScreens();
+    updateActiveMenuItem("navTable");
+
+    const screen = document.getElementById("tableScreen");
+    if(screen){
+        screen.style.display = "block";
+        screen.scrollIntoView({behavior:"smooth",block:"start"});
+    }
+
+    const container = document.getElementById("consultStandingsContainer");
+    if(container) container.dataset.loaded = "false";
+    loadConsultationStandings();
 }
 
 function showRankingFromMenu(){
